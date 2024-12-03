@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Platform } from 'react-native';
+import { Button, Card, Text, View } from 'react-native-ui-lib';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -19,6 +20,21 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
+
+      {/* UI Lib Test Components */}
+      <View padding-20>
+        <Card height={100} center padding-20 marginB-20>
+          <Text text60>UI Lib Card Example</Text>
+          <Text text70>This is a test of React Native UI Lib!</Text>
+        </Card>
+
+        <Button 
+          label="UI Lib Button"
+          backgroundColor="#30B650"
+          onPress={() => alert('Button Pressed!')}
+        />
+      </View>
+
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
