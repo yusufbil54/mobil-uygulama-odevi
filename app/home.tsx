@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Card, Button, Colors, Chip, Avatar } from 'react-native-ui-lib';
 import { router } from 'expo-router';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -71,7 +71,8 @@ export default function HomeScreen() {
         <View row centerV>
           <Button
             link
-            iconSource={() => <Ionicons name="notifications-outline" size={24} color={Colors.primary} />}
+            iconSource={() => <AntDesign name="user" size={24} color={Colors.primary} />}
+            onPress={() => router.push('/profile')}
             style={styles.iconButton}
           />
           <Button
@@ -123,8 +124,8 @@ export default function HomeScreen() {
             <Button
               link
               label="Tümünü Gör"
-              size={Button.sizes.small}
               color={Colors.primary}
+              onPress={() => router.push('/allResults')}
             />
           </View>
 
