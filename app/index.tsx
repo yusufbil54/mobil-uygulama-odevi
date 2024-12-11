@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Dimensions, ImageBackground } from 'react-native';
+import { StyleSheet, Dimensions, ImageBackground, Alert } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
@@ -12,12 +12,25 @@ export default function LoginScreen() {
 
   const handleLogin = () => {
     console.log('Login attempt:', { username, password });
-    router.push('/home');
+
+    // Kullanıcı adı ve şifre kontrolü
+    if (
+      (username === 'admin1' && password === '1234') ||
+      (username === 'admin2' && password === '5678')
+    ) {
+      router.push('/admin-panel'); // Admin paneline yönlendirme
+    } else if (username && password) {
+      router.push('/home'); // Standart kullanıcıyı home sayfasına yönlendirme
+    } else {
+      Alert.alert('Hata', 'Lütfen geçerli bir kullanıcı adı ve şifre girin.'); // Hata mesajı
+    }
   };
 
   return (
     <ImageBackground
-      source={{ uri: 'https://img.freepik.com/free-vector/abstract-medical-wallpaper-template-design_53876-61802.jpg' }}
+      source={{
+        uri: 'https://img.freepik.com/free-vector/abstract-medical-wallpaper-template-design_53876-61802.jpg',
+      }}
       style={styles.container}
       resizeMode="cover"
     >
