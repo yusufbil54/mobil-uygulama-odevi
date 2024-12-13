@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Card, Colors, TextField, Button, Avatar } from 'react-native-ui-lib';
 import { router } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -20,7 +20,6 @@ export default function ProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSave = () => {
-    // Burada API'ye kayıt işlemi yapılabilir
     setIsEditing(false);
   };
 
@@ -44,12 +43,15 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View center marginB-20>
-            <AntDesign name="user" size={80} color={Colors.grey30} />
+            <View style={styles.avatarContainer}>
+              <MaterialIcons name="person" size={60} color={Colors.white} />
+            </View>
             {!isEditing && (
               <Button
                 link
                 label="Profili Düzenle"
                 color={Colors.primary}
+                labelStyle={styles.editButtonLabel}
                 marginT-10
                 onPress={() => setIsEditing(true)}
               />
@@ -58,56 +60,126 @@ export default function ProfileScreen() {
 
           <Card enableShadow style={styles.infoCard}>
             <View>
-              <TextField
-                label="Ad Soyad"
-                value={profileData.name}
-                onChangeText={(text) => setProfileData({ ...profileData, name: text })}
-                editable={isEditing}
-                style={styles.input}
-              />
-              <TextField
-                label="E-posta"
-                value={profileData.email}
-                onChangeText={(text) => setProfileData({ ...profileData, email: text })}
-                editable={isEditing}
-                style={styles.input}
-              />
-              <TextField
-                label="Telefon"
-                value={profileData.phone}
-                onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                editable={isEditing}
-                style={styles.input}
-              />
-              <TextField
-                label="Doğum Tarihi"
-                value={profileData.birthDate}
-                onChangeText={(text) => setProfileData({ ...profileData, birthDate: text })}
-                editable={isEditing}
-                style={styles.input}
-              />
-              <TextField
-                label="Kan Grubu"
-                value={profileData.bloodType}
-                onChangeText={(text) => setProfileData({ ...profileData, bloodType: text })}
-                editable={isEditing}
-                style={styles.input}
-              />
-              <TextField
-                label="Adres"
-                value={profileData.address}
-                onChangeText={(text) => setProfileData({ ...profileData, address: text })}
-                editable={isEditing}
-                multiline
-                style={styles.input}
-              />
-              <TextField
-                label="Acil Durum Kontağı"
-                value={profileData.emergencyContact}
-                onChangeText={(text) => setProfileData({ ...profileData, emergencyContact: text })}
-                editable={isEditing}
-                style={styles.input}
-              />
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="person" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Ad Soyad"
+                    value={profileData.name}
+                    onChangeText={(text) => setProfileData({ ...profileData, name: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                 <View style={styles.iconContainer}>
+                  <MaterialIcons name="email" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="E-posta"
+                    value={profileData.email}
+                    onChangeText={(text) => setProfileData({ ...profileData, email: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="phone" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Telefon"
+                    value={profileData.phone}
+                    onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="calendar-today" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Doğum Tarihi"
+                    value={profileData.birthDate}
+                    onChangeText={(text) => setProfileData({ ...profileData, birthDate: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="opacity" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Kan Grubu"
+                    value={profileData.bloodType}
+                    onChangeText={(text) => setProfileData({ ...profileData, bloodType: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="location-on" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Adres"
+                    value={profileData.address}
+                    onChangeText={(text) => setProfileData({ ...profileData, address: text })}
+                    editable={isEditing}
+                    multiline
+                    numberOfLines={3}
+                    style={[styles.input, styles.multilineInput]}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="emergency" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Acil Durum Kontağı"
+                    value={profileData.emergencyContact}
+                    onChangeText={(text) => setProfileData({ ...profileData, emergencyContact: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
             </View>
 
             {isEditing && (
@@ -115,15 +187,16 @@ export default function ProfileScreen() {
                 <Button
                   outline
                   label="İptal"
-                  color={Colors.grey30}
+                  color={Colors.grey20}
                   onPress={() => setIsEditing(false)}
-                  style={styles.button}
+                  style={[styles.button, styles.cancelButton]}
+                  outlineColor={Colors.grey40}
                 />
                 <Button
                   label="Kaydet"
                   backgroundColor={Colors.primary}
                   onPress={handleSave}
-                  style={styles.button}
+                  style={[styles.button, styles.saveButton]}
                 />
               </View>
             )}
@@ -143,6 +216,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.grey60,
   },
   backButton: {
     marginRight: 10,
@@ -153,17 +228,72 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
+  avatarContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  editButtonLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   infoCard: {
-    padding: 16,
+    padding: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    width: '100%',
+  },
+  fieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    width: '100%',
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    marginTop: 4,
+  },
+  inputWrapper: {
+    flex: 1,
+    width: '100%',
   },
   input: {
-    marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.grey50,
+    borderBottomColor: Colors.grey40,
+    paddingBottom: 8,
+    width: '100%',
+  },
+  labelText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    width: '100%',
+  },
+  multilineInput: {
+    height: 'auto',
+    textAlignVertical: 'top',
   },
   button: {
     flex: 1,
     marginHorizontal: 5,
+    height: 44,
+    borderRadius: 8,
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  saveButton: {
+    elevation: 2,
   },
 });
-

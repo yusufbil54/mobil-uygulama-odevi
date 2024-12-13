@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, SafeAreaView } from 'react-native';
-import { Stack } from 'expo-router';
-import { Colors } from '@/constants/Colors';
+import { StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, Card, Button, Colors, TextField } from 'react-native-ui-lib';
+import { Stack, router } from 'expo-router';
+import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 interface TestResult {
     id: string;
@@ -11,7 +14,6 @@ interface TestResult {
     results: string;
 }
 
-// Örnek veri
 const mockData: TestResult[] = [
     {
         id: '1',
@@ -40,103 +42,178 @@ const AdminPanel = () => {
         setFilteredData(filtered);
     };
 
-    const renderTestCard = ({ item }: { item: TestResult }) => (
-        <View style={styles.card}>
-            <Text style={styles.cardTitle}>Hasta: {item.patientName}</Text>
-            <Text style={styles.cardText}>Tarih: {item.testDate}</Text>
-            <Text style={styles.cardText}>Tahlil Türü: {item.testType}</Text>
-            <Text style={styles.cardText}>Sonuç: {item.results}</Text>
-        </View>
-    );
-
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <Stack.Screen
                 options={{
-                    headerTitle: "Admin Paneli",
+                    headerShown: false,
                 }}
             />
             
-            <View style={styles.searchSection}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Hasta Adı Soyadı"
-                    value={searchName}
-                    onChangeText={setSearchName}
-                    placeholderTextColor={Colors.light.icon}
-                />
-
-                <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                    <Text style={styles.buttonText}>Ara</Text>
-                </TouchableOpacity>
+            <View style={styles.header}>
+                <View>
+                    <Text text50 color={Colors.grey10}>
+                        Admin Paneli
+                    </Text>
+                    <Text text65 color={Colors.grey30}>
+                        Yönetici
+                    </Text>
+                </View>
+                <View row centerV>
+                    <Button
+                        link
+                        iconSource={() => <AntDesign name="logout" size={24} color={Colors.primary} />}
+                        onPress={() => router.push('/')}
+                    />
+                </View>
             </View>
 
-            <FlatList
-                data={filteredData}
-                renderItem={renderTestCard}
-                keyExtractor={item => item.id}
-                style={styles.list}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
-        </SafeAreaView>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                    <Card style={styles.searchCard} enableShadow>
+                        <Text text65 color={Colors.grey10} marginB-10>
+                            Hasta Ara
+                        </Text>
+                        <View style={styles.searchInputContainer}>
+                            <AntDesign name="search1" size={20} color={Colors.grey30} style={styles.searchIcon} />
+                            <TextField
+                                placeholder="Hasta Adı Soyadı"
+                                value={searchName}
+                                onChangeText={setSearchName}
+                                fieldStyle={styles.searchInput}
+                                enableErrors={false}
+                                onSubmitEditing={handleSearch}
+                            />
+                        </View>
+                        <Button
+                            label="Ara"
+                            size={Button.sizes.medium}
+                            backgroundColor={Colors.primary}
+                            onPress={handleSearch}
+                            marginT-10
+                            borderRadius={8}
+                        />
+                    </Card>
+
+                    <View style={styles.statsContainer}>
+                        <Card style={styles.statCard} enableShadow>
+                            <MaterialIcons name="people" size={24} color={Colors.primary} />
+                            <Text text60 color={Colors.grey10} marginT-8>
+                                {filteredData.length}
+                            </Text>
+                            <Text text80 color={Colors.grey30}>
+                                Toplam Hasta
+                            </Text>
+                        </Card>
+                        <Card style={styles.statCard} enableShadow>
+                            <MaterialIcons name="assignment" size={24} color={Colors.primary} />
+                            <Text text60 color={Colors.grey10} marginT-8>
+                                {filteredData.length}
+                            </Text>
+                            <Text text80 color={Colors.grey30}>
+                                Test Sonucu
+                            </Text>
+                        </Card>
+                    </View>
+
+                    <Text text65 color={Colors.grey10} marginB-10>
+                        Test Sonuçları
+                    </Text>
+
+                    {filteredData.map((item) => (
+                        <Card key={item.id} style={styles.resultCard} enableShadow>
+                            <View row spread>
+                                <View>
+                                    <Text text65 color={Colors.grey10} marginB-4>
+                                        {item.patientName}
+                                    </Text>
+                                    <Text text80 color={Colors.grey30}>
+                                        {item.testType}
+                                    </Text>
+                                </View>
+                                <View right>
+                                    <Text text80 color={Colors.primary} style={styles.resultText}>
+                                        {item.results}
+                                    </Text>
+                                    <Text text90 color={Colors.grey30}>
+                                        {item.testDate}
+                                    </Text>
+                                </View>
+                            </View>
+                        </Card>
+                    ))}
+                </View>
+            </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
+        backgroundColor: Colors.grey70,
     },
-    searchSection: {
-        padding: 16,
-    },
-    input: {
-        height: 50,
-        backgroundColor: Colors.light.background,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        marginBottom: 8,
-        borderWidth: 1,
-        borderColor: Colors.light.icon,
-    },
-    searchButton: {
-        height: 50,
-        backgroundColor: Colors.light.tint,
-        borderRadius: 12,
-        justifyContent: 'center',
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 8,
+        padding: 20,
+        paddingTop: 60,
+        backgroundColor: Colors.white,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60,
     },
-    buttonText: {
-        color: Colors.light.background,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    list: {
+    scrollView: {
         flex: 1,
     },
-    listContent: {
-        padding: 16,
+    content: {
+        padding: 20,
+        width: width > 500 ? 500 : '100%',
+        alignSelf: 'center',
     },
-    card: {
-        backgroundColor: Colors.light.background,
-        padding: 16,
+    searchCard: {
+        padding: 20,
+        marginBottom: 20,
+        backgroundColor: Colors.white,
         borderRadius: 12,
-        marginBottom: 12,
+    },
+    searchInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         borderWidth: 1,
-        borderColor: Colors.light.icon,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        height: 40,
     },
-    cardTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: Colors.light.tint,
-        marginBottom: 8,
+    searchIcon: {
+        marginRight: 8,
     },
-    cardText: {
-        fontSize: 14,
-        color: Colors.light.text,
-        marginBottom: 4,
+    searchInput: {
+        flex: 1,
+        height: 40,
+        padding: 0,
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    statCard: {
+        padding: 16,
+        width: '48%',
+        alignItems: 'center',
+        backgroundColor: Colors.white,
+        borderRadius: 12,
+    },
+    resultCard: {
+        padding: 16,
+        marginBottom: 12,
+        backgroundColor: Colors.white,
+        borderRadius: 12,
+    },
+    resultText: {
+        fontWeight: '600',
     },
 });
 

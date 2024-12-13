@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet } from 'react-native';
 import { View, Text, Card, Button, Colors, Chip, Avatar } from 'react-native-ui-lib';
 import { router } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -131,25 +131,47 @@ export default function HomeScreen() {
 
           {mockTestResults.map((result) => (
             <Card key={result.id} style={styles.resultCard} enableShadow>
-              <View row spread centerV>
-                <View>
-                  <Text text65 color={Colors.grey10}>
-                    {result.type}
-                  </Text>
-                  <Text text70 color={Colors.grey30}>
-                    {result.date}
-                  </Text>
+              <View style={styles.resultContainer}>
+                <View style={styles.resultHeader}>
+                  <Text style={styles.testName}>{result.type}</Text>
+                  <Text style={styles.dateText}>{result.date}</Text>
                 </View>
-                <View row centerV>
-                  <Text text65 color={Colors.grey10} marginR-10>
-                    {result.value} mg/dL
-                  </Text>
-                  <Chip
-                    label={getStatusLabel(result.status)}
-                    labelStyle={{ color: Colors.white }}
-                    backgroundColor={getStatusColor(result.status)}
-                    containerStyle={styles.chip}
-                  />
+                <View style={styles.resultValueSection}>
+                  <View style={styles.valueContainer}>
+                    <MaterialIcons 
+                      name={
+                        result.status === 'high' ? 'arrow-upward' :
+                        result.status === 'low' ? 'arrow-downward' : 'remove'
+                      } 
+                      size={24} 
+                      color={
+                        result.status === 'high' ? '#FF4444' :
+                        result.status === 'low' ? '#4CAF50' : '#2196F3'
+                      }
+                      style={styles.valueIcon}
+                    />
+                    <Text style={[
+                      styles.valueText,
+                      result.status === 'high' && styles.highValue,
+                      result.status === 'normal' && styles.normalValue,
+                      result.status === 'low' && styles.lowValue,
+                    ]}>
+                      {result.value} mg/dL
+                    </Text>
+                  </View>
+                  <View style={[
+                    styles.statusIndicator,
+                    result.status === 'high' && styles.highStatus,
+                    result.status === 'normal' && styles.normalStatus,
+                    result.status === 'low' && styles.lowStatus,
+                  ]}>
+                    <Text style={[
+                      styles.statusText,
+                      result.status === 'high' && styles.highStatusText,
+                      result.status === 'normal' && styles.normalStatusText,
+                      result.status === 'low' && styles.lowStatusText,
+                    ]}>{getStatusLabel(result.status)}</Text>
+                  </View>
                 </View>
               </View>
             </Card>
@@ -198,11 +220,87 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   resultCard: {
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     backgroundColor: Colors.white,
+    borderRadius: 8,
+    padding: 0,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  chip: {
-    borderRadius: 4,
+  resultContainer: {
+    padding: 12,
+  },
+  resultHeader: {
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    paddingBottom: 6,
+  },
+  testName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.grey10,
+    marginBottom: 2,
+  },
+  dateText: {
+    fontSize: 12,
+    color: Colors.grey30,
+  },
+  resultValueSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  valueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  valueIcon: {
+    marginRight: 6,
+  },
+  valueText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  highValue: {
+    color: '#FF4444',
+  },
+  normalValue: {
+    color: '#2196F3',
+  },
+  lowValue: {
+    color: '#4CAF50',
+  },
+  statusIndicator: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  highStatus: {
+    backgroundColor: '#FFE5E5',
+  },
+  normalStatus: {
+    backgroundColor: '#E3F2FD',
+  },
+  lowStatus: {
+    backgroundColor: '#E8F5E9',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  highStatusText: {
+    color: '#FF4444',
+  },
+  normalStatusText: {
+    color: '#2196F3',
+  },
+  lowStatusText: {
+    color: '#4CAF50',
   },
 });
