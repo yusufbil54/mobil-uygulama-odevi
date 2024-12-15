@@ -36,3 +36,17 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Backend
+/backend/node_modules
+/backend/.env
+/backend/.env.local
+/backend/.env.development.local
+/backend/.env.test.local
+/backend/.env.production.local
+/backend/npm-debug.log*
+/backend/yarn-debug.log*
+/backend/yarn-error.log*
+/backend/build
+/backend/dist
+/backend/.DS_Store
