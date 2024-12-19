@@ -3,26 +3,50 @@ import { StyleSheet, Dimensions, ImageBackground, Alert } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
+
+// API URL'ini tanımlayalım
+const API_URL = 'http:localhost/api'; // Backend URL'inizi buraya yazın
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login attempt:', { username, password });
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        username,
+        password
+      });
 
-    // Kullanıcı adı ve şifre kontrolü
-    if (
-      (username === 'admin1' && password === '1234') ||
-      (username === 'admin2' && password === '5678')
-    ) {
-      router.push('/admin-panel'); // Admin paneline yönlendirme
-    } else if (username && password) {
-      router.push('/home'); // Standart kullanıcıyı home sayfasına yönlendirme
-    } else {
-      Alert.alert('Hata', 'Lütfen geçerli bir kullanıcı adı ve şifre girin.'); // Hata mesajı
+      // Backend'den gelen token'ı saklayalım
+      const { token, user } = response.data;
+      
+      // Token'ı AsyncStorage'a kaydedebilirsiniz
+      // await AsyncStorage.setItem('userToken', token);
+      
+      // Kullanıcı rolüne göre yönlendirme yapalım
+      if (user.role === 'admin') {
+        router.push('/admin-panel');
+      } else {
+        router.push('/home');
+      }
+
+    } catch (error) {
+      let errorMessage = 'Giriş yapılırken bir hata oluştu';
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || errorMessage;
+      }
+      
+      Alert.alert('Hata', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,13 +106,14 @@ export default function LoginScreen() {
             />
 
             <Button
-              label="Giriş Yap"
+              label={loading ? "Giriş yapılıyor..." : "Giriş Yap"}
               size={Button.sizes.large}
               backgroundColor={Colors.primary}
               style={styles.loginButton}
               onPress={handleLogin}
               borderRadius={10}
               enableShadow
+              disabled={loading}
             />
 
             <Button

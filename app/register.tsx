@@ -1,54 +1,78 @@
 import React, { useState } from 'react';
-import { StyleSheet, Dimensions, ImageBackground } from 'react-native';
+import { StyleSheet, Dimensions, ImageBackground, Alert } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+const API_URL = 'http://your-backend-url/api'; // Backend URL'inizi buraya yazın
 
 export default function RegisterScreen() {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    console.log('Register attempt:', formData);
-    router.push('/');
-  };
+  const handleRegister = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await axios.post(`${API_URL}/auth/register`, {
+        username,
+        password,
+        email
+      });
 
-  const updateForm = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+      Alert.alert(
+        'Başarılı', 
+        'Kayıt işlemi başarıyla tamamlandı. Giriş yapabilirsiniz.',
+        [
+          {
+            text: 'Tamam',
+            onPress: () => router.push('/')
+          }
+        ]
+      );
+
+    } catch (error) {
+      let errorMessage = 'Kayıt olurken bir hata oluştu';
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || errorMessage;
+      }
+      
+      Alert.alert('Hata', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <ImageBackground
-      source={{ uri: 'https://img.freepik.com/free-vector/abstract-medical-wallpaper-template-design_53876-61802.jpg' }}
+      source={{
+        uri: 'https://img.freepik.com/free-vector/abstract-medical-wallpaper-template-design_53876-61802.jpg',
+      }}
       style={styles.container}
       resizeMode="cover"
     >
       <View style={styles.overlay}>
         <Card style={styles.card} enableShadow>
           <View style={styles.header}>
-            <AntDesign name="adduser" size={50} color={Colors.primary} />
+            <AntDesign name="medicinebox" size={50} color={Colors.primary} />
             <Text text40BO color={Colors.primary} style={styles.title}>
-              Yeni Hesap
-            </Text>
-            <Text text65 color={Colors.grey30}>
-              Bilgilerinizi girin
+              Kayıt Ol
             </Text>
           </View>
 
           <View style={styles.form}>
             <TextField
               text70
-              placeholder="Ad Soyad"
+              placeholder="Kullanıcı Adı"
               floatingPlaceholder
               containerStyle={styles.input}
-              value={formData.fullName}
-              onChangeText={(value) => updateForm('fullName', value)}
+              value={username}
+              onChangeText={setUsername}
               enableErrors
               validate={['required']}
               validateOnStart
@@ -62,12 +86,11 @@ export default function RegisterScreen() {
               placeholder="E-posta"
               floatingPlaceholder
               containerStyle={styles.input}
-              value={formData.email}
-              onChangeText={(value) => updateForm('email', value)}
+              value={email}
+              onChangeText={setEmail}
               enableErrors
               validate={['required', 'email']}
               validateOnStart
-              keyboardType="email-address"
               leadingAccessory={
                 <AntDesign name="mail" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
               }
@@ -78,24 +101,8 @@ export default function RegisterScreen() {
               placeholder="Şifre"
               floatingPlaceholder
               containerStyle={styles.input}
-              value={formData.password}
-              onChangeText={(value) => updateForm('password', value)}
-              secureTextEntry
-              enableErrors
-              validate={['required']}
-              validateOnStart
-              leadingAccessory={
-                <AntDesign name="lock" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
-              }
-            />
-
-            <TextField
-              text70
-              placeholder="Şifre Tekrar"
-              floatingPlaceholder
-              containerStyle={styles.input}
-              value={formData.confirmPassword}
-              onChangeText={(value) => updateForm('confirmPassword', value)}
+              value={password}
+              onChangeText={setPassword}
               secureTextEntry
               enableErrors
               validate={['required']}
@@ -106,13 +113,14 @@ export default function RegisterScreen() {
             />
 
             <Button
-              label="Kayıt Ol"
+              label={loading ? "Kayıt yapılıyor..." : "Kayıt Ol"}
               size={Button.sizes.large}
               backgroundColor={Colors.primary}
               style={styles.registerButton}
               onPress={handleRegister}
               borderRadius={10}
               enableShadow
+              disabled={loading}
             />
 
             <Button
