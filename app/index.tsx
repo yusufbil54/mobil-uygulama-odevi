@@ -1,54 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Dimensions, ImageBackground, Alert } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
-import axios from 'axios';
+import { observer } from 'mobx-react';
+import { appStore } from '../store/appStore';
+import Toast from 'react-native-toast-message';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// API URL'ini tanımlayalım
-const API_URL = 'http:localhost/api'; // Backend URL'inizi buraya yazın
+const LoginScreen = observer(() => {
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
 
-export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const handleLogin = () => {
+     appStore.login({
+       email,
+       password
+     }, router);
+  }
 
-  const handleLogin = async () => {
-    try {
-      setLoading(true);
-      
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        username,
-        password
-      });
-
-      // Backend'den gelen token'ı saklayalım
-      const { token, user } = response.data;
-      
-      // Token'ı AsyncStorage'a kaydedebilirsiniz
-      // await AsyncStorage.setItem('userToken', token);
-      
-      // Kullanıcı rolüne göre yönlendirme yapalım
-      if (user.role === 'admin') {
-        router.push('/admin-panel');
-      } else {
-        router.push('/home');
-      }
-
-    } catch (error) {
-      let errorMessage = 'Giriş yapılırken bir hata oluştu';
-      
-      if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || errorMessage;
-      }
-      
-      Alert.alert('Hata', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleRegisterPress = React.useCallback(() => {
+    router.push('/register');
+  }, []);
 
   return (
     <ImageBackground
@@ -76,16 +50,16 @@ export default function LoginScreen() {
           <View style={styles.form}>
             <TextField
               text70
-              placeholder="Kullanıcı Adı"
+              placeholder="E-posta"
               floatingPlaceholder
               containerStyle={styles.input}
-              value={username}
-              onChangeText={setUsername}
+              value={email}
+              onChangeText={setEmail}
               enableErrors
-              validate={['required']}
+              validate={['required', 'email']}
               validateOnStart
               leadingAccessory={
-                <AntDesign name="user" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
+                <AntDesign name="mail" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
               }
             />
 
@@ -106,14 +80,14 @@ export default function LoginScreen() {
             />
 
             <Button
-              label={loading ? "Giriş yapılıyor..." : "Giriş Yap"}
+              label={appStore.loading ? "Giriş yapılıyor..." : "Giriş Yap"}
               size={Button.sizes.large}
               backgroundColor={Colors.primary}
               style={styles.loginButton}
               onPress={handleLogin}
               borderRadius={10}
               enableShadow
-              disabled={loading}
+              disabled={appStore.loading || !email || !password}
             />
 
             <Button
@@ -121,14 +95,14 @@ export default function LoginScreen() {
               link
               color={Colors.primary}
               style={styles.registerButton}
-              onPress={() => router.push('/register')}
+              onPress={handleRegisterPress}
             />
           </View>
         </Card>
       </View>
     </ImageBackground>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -173,3 +147,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
+export default LoginScreen;

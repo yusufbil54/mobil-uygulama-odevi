@@ -1,52 +1,31 @@
-import React, { useState } from 'react';
-import { StyleSheet, Dimensions, ImageBackground, Alert } from 'react-native';
+import React from 'react';
+import { StyleSheet, Dimensions, ImageBackground } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
-import axios from 'axios';
+import { observer } from 'mobx-react';
+import { appStore } from '../store/appStore';
 
 const { width } = Dimensions.get('window');
-const API_URL = 'http://your-backend-url/api'; // Backend URL'inizi buraya yazın
 
-export default function RegisterScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+const RegisterScreen = observer(() => {
+  const [name, setName] = React.useState('');
+  const [surname, setSurname] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
 
-  const handleRegister = async () => {
-    try {
-      setLoading(true);
-      
-      const response = await axios.post(`${API_URL}/auth/register`, {
-        username,
-        password,
-        email
-      });
+  const handleRegister = () => {
+    appStore.register({
+      name,
+      surname,
+      email,
+      password
+    }, router);
+  }
 
-      Alert.alert(
-        'Başarılı', 
-        'Kayıt işlemi başarıyla tamamlandı. Giriş yapabilirsiniz.',
-        [
-          {
-            text: 'Tamam',
-            onPress: () => router.push('/')
-          }
-        ]
-      );
-
-    } catch (error) {
-      let errorMessage = 'Kayıt olurken bir hata oluştu';
-      
-      if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || errorMessage;
-      }
-      
-      Alert.alert('Hata', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleLoginPress = React.useCallback(() => {
+    router.push('/');
+  }, []);
 
   return (
     <ImageBackground
@@ -68,11 +47,26 @@ export default function RegisterScreen() {
           <View style={styles.form}>
             <TextField
               text70
-              placeholder="Kullanıcı Adı"
+              placeholder="Ad"
               floatingPlaceholder
               containerStyle={styles.input}
-              value={username}
-              onChangeText={setUsername}
+              value={name}
+              onChangeText={setName}
+              enableErrors
+              validate={['required']}
+              validateOnStart
+              leadingAccessory={
+                <AntDesign name="user" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
+              }
+            />
+
+            <TextField
+              text70
+              placeholder="Soyad"
+              floatingPlaceholder
+              containerStyle={styles.input}
+              value={surname}
+              onChangeText={setSurname}
               enableErrors
               validate={['required']}
               validateOnStart
@@ -98,14 +92,14 @@ export default function RegisterScreen() {
 
             <TextField
               text70
-              placeholder="Şifre"
+              placeholder="Şifre (en az 6 karakter)"
               floatingPlaceholder
               containerStyle={styles.input}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               enableErrors
-              validate={['required']}
+              validate={['required', (value) => value.length >= 6 || 'Şifre en az 6 karakter olmalıdır']}
               validateOnStart
               leadingAccessory={
                 <AntDesign name="lock" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
@@ -113,14 +107,14 @@ export default function RegisterScreen() {
             />
 
             <Button
-              label={loading ? "Kayıt yapılıyor..." : "Kayıt Ol"}
+              label={appStore.loading ? "Kayıt yapılıyor..." : "Kayıt Ol"}
               size={Button.sizes.large}
               backgroundColor={Colors.primary}
               style={styles.registerButton}
               onPress={handleRegister}
               borderRadius={10}
               enableShadow
-              disabled={loading}
+              disabled={appStore.loading || !name || !surname || !email || password.length < 6}
             />
 
             <Button
@@ -128,14 +122,14 @@ export default function RegisterScreen() {
               link
               color={Colors.primary}
               style={styles.loginButton}
-              onPress={() => router.push('/')}
+              onPress={handleLoginPress}
             />
           </View>
         </Card>
       </View>
     </ImageBackground>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -180,3 +174,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
+export default RegisterScreen;

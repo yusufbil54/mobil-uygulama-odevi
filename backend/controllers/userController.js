@@ -35,27 +35,17 @@ const registerUser = async (req, res) => {
 
         if (user) {
             res.status(201).json({
-                _id: user._id,
-                name: user.name,
-                surname: user.surname,
-                email: user.email,
-                role: user.role,
-                token: generateToken(user._id),
+                success: true,
+                message: 'User created successfully',
             });
         }
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
-
-// @desc    Authenticate a user
-// @route   POST /api/users/login
-// @access  Public
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Check for user email
         const user = await User.findOne({ email }).select('+password');
 
         if (user && (await user.matchPassword(password))) {
