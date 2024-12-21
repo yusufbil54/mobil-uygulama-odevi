@@ -82,7 +82,7 @@ const AdminPanel = () => {
     const [filteredData, setFilteredData] = useState<TestResult[]>(mockData.slice(0, 4));
 
     const handleSearch = () => {
-        const filtered = mockData.filter(item => 
+        const filtered = mockData.filter(item =>
             item.patientName.toLowerCase().includes(searchName.toLowerCase())
         );
         setFilteredData(filtered.slice(0, 4));
@@ -116,7 +116,7 @@ const AdminPanel = () => {
                     headerShown: false,
                 }}
             />
-            
+
             <View style={styles.header}>
                 <View>
                     <Text text50 color={Colors.grey10}>
@@ -133,10 +133,22 @@ const AdminPanel = () => {
                         onPress={() => router.push('/')}
                     />
                 </View>
+
+
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
+                    <View style={[styles.headerRow, { alignItems: 'center', justifyContent: 'center' }]}>
+                        <Button
+                            label="Yeni Test Ekle"
+                            onPress={() => router.push('/testEntry')}
+                            backgroundColor={Colors.primary}
+                            borderRadius={8}
+                            marginT-10
+                            style={styles.fullWidthButton}
+                        />
+                    </View>
                     <Card style={styles.searchCard} enableShadow>
                         <Text text65 color={Colors.grey10} marginB-10>
                             Hasta Ara
@@ -163,6 +175,7 @@ const AdminPanel = () => {
                     </Card>
 
                     
+
 
                     <View style={styles.headerRow}>
                         <Text text65 color={Colors.grey10}>
@@ -227,6 +240,11 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
         borderBottomWidth: 1,
         borderBottomColor: Colors.grey60,
+    },
+    fullWidthButton: {
+        width: '100%',
+        paddingVertical: 14,  // Increased height for the button
+        marginBottom: 10,
     },
     scrollView: {
         flex: 1,
