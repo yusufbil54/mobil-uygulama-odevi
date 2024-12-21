@@ -162,26 +162,7 @@ const AdminPanel = () => {
                         />
                     </Card>
 
-                    {/* <View style={styles.statsContainer}>
-                        <Card style={styles.statCard} enableShadow>
-                            <MaterialIcons name="people" size={24} color={Colors.primary} />
-                            <Text text60 color={Colors.grey10} marginT-8>
-                                {filteredData.length}
-                            </Text>
-                            <Text text80 color={Colors.grey30}>
-                                Toplam Hasta
-                            </Text>
-                        </Card>
-                        <Card style={styles.statCard} enableShadow>
-                            <MaterialIcons name="assignment" size={24} color={Colors.primary} />
-                            <Text text60 color={Colors.grey10} marginT-8>
-                                {filteredData.length}
-                            </Text>
-                            <Text text80 color={Colors.grey30}>
-                                Test Sonucu
-                            </Text>
-                        </Card>
-                    </View> */}
+                    
 
                     <View style={styles.headerRow}>
                         <Text text65 color={Colors.grey10}>
