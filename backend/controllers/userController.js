@@ -8,9 +8,6 @@ const generateToken = (id) => {
     });
 };
 
-// @desc    Register new user
-// @route   POST /api/users/register
-// @access  Public
 const registerUser = async (req, res) => {
     try {
         const { name, surname, email, password } = req.body;
@@ -78,14 +75,65 @@ const getUserProfile = async (req, res) => {
             surname: user.surname,
             email: user.email,
             role: user.role,
+            phone: user.phone,
+            birthDate: user.birthDate,
+            bloodType: user.bloodType,
+            address: user.address,
+            emergencyContact: user.emergencyContact,
         });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
 
+const updateProfile = async (req, res) => {
+    const {
+        name,
+        surname,
+        phone,
+        birthDate,
+        bloodType,
+        address,
+        emergencyContact
+    } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    user.name = name || user.name;
+    user.surname = surname || user.surname;
+    user.phone = phone || user.phone;
+    user.birthDate = birthDate || user.birthDate;
+    user.bloodType = bloodType || user.bloodType;
+    user.address = address || user.address;
+    user.emergencyContact = emergencyContact || user.emergencyContact;
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+        success: true,
+        data: {
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            surname: updatedUser.surname,
+            email: updatedUser.email,
+            phone: updatedUser.phone,
+            birthDate: updatedUser.birthDate,
+            bloodType: updatedUser.bloodType,
+            address: updatedUser.address,
+            emergencyContact: updatedUser.emergencyContact,
+            role: updatedUser.role
+        }
+    });
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getUserProfile,
+    updateProfile,
 };

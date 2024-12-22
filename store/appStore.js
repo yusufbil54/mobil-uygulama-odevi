@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, makeObservable, observable } from 'mobx';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
@@ -9,9 +9,16 @@ class AppStore {
     user = null;
     loading = false;
     error = null;
-
+    token = null;
     constructor() {
-        makeAutoObservable(this);
+        makeObservable(this, {
+            user: observable,
+            loading: observable,
+            error: observable,
+            token: observable,
+        });
+        this.getToken();
+
     }
 
     showToast(type, text1, text2) {
@@ -23,6 +30,10 @@ class AppStore {
             visibilityTime: 4000,
             autoHide: true,
         });
+    }
+
+    async getToken() {
+        this.token = await AsyncStorage.getItem('token');
     }
 
     setUser(user) {
@@ -37,8 +48,17 @@ class AppStore {
         this.error = error;
     }
 
+    checkToken(router) {
+        if (this.token) {
+            router.push('/home');
+        } else {
+            router.push('/');
+        }
+    }
+
     async login(data, router) {
         try {
+            console.log(data);
             this.setLoading(true);
             this.setError(null);
 
@@ -46,7 +66,7 @@ class AppStore {
 
             if (response.data.token) {
                 await AsyncStorage.setItem('token', response.data.token);
-                this.setUser(response.data.user);
+                this.setUser(response.data);
                 this.showToast('success', 'Başarılı', 'Giriş yapıldı');
                 router.push('/home');
             }
@@ -80,11 +100,13 @@ class AppStore {
         }
     }
 
-    async logout() {
+    async logout(router) {
         try {
             await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('user');
             this.setUser(null);
             this.showToast('success', 'Başarılı', 'Çıkış yapıldı');
+            router.push('/');
         } catch (error) {
             console.error('Logout error:', error);
             this.showToast('error', 'Hata', 'Çıkış yapılırken bir hata oluştu');
@@ -93,6 +115,43 @@ class AppStore {
 
     get isAuthenticated() {
         return !!this.user;
+    }
+
+    async getUserProfile() {
+        try {
+            const response = await axios.get(`${API_URL}/api/users/profile`, {
+                headers: {
+                    Authorization: `Bearer ${this.token}`
+                }
+            });
+            this.setUser(response.data);
+        } catch (error) {
+            console.error('User profile fetch error:', error);
+        }
+    }
+
+    async updateProfile(data) {
+        try {
+            this.setLoading(true);
+            const response = await axios.put(`${API_URL}/api/users/profile`, data, {
+                headers: {
+                    Authorization: `Bearer ${this.token}`
+                }
+            });
+
+            if (response.data.success) {
+                this.setUser(response.data.data);
+                this.showToast('success', 'Başarılı', 'Profil bilgileri güncellendi');
+                return response.data;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || 'Profil güncellenirken bir hata oluştu';
+            this.setError(errorMessage);
+            this.showToast('error', 'Hata', errorMessage);
+            throw error;
+        } finally {
+            this.setLoading(false);
+        }
     }
 }
 

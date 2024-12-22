@@ -1,8 +1,10 @@
 import React from 'react';
 import { Dimensions, ScrollView, StyleSheet } from 'react-native';
 import { View, Text, Card, Button, Colors, Chip, Avatar } from 'react-native-ui-lib';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { observer } from 'mobx-react';
+import { appStore } from '../store/appStore';
 
 const { width } = Dimensions.get('window');
 
@@ -56,7 +58,8 @@ const getStatusLabel = (status: string) => {
   }
 };
 
-export default function HomeScreen() {
+const HomeScreen = observer(() => {
+  const router = useRouter();
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -65,7 +68,7 @@ export default function HomeScreen() {
             Hoş Geldiniz
           </Text>
           <Text text65 color={Colors.grey30}>
-            John Doe
+            {appStore.user?.name} {appStore.user?.surname}
           </Text>
         </View>
         <View row centerV>
@@ -78,7 +81,7 @@ export default function HomeScreen() {
           <Button
             link
             iconSource={() => <AntDesign name="logout" size={24} color={Colors.primary} />}
-            onPress={() => router.push('/')}
+            onPress={() => appStore.logout(router)}
           />
         </View>
       </View>
@@ -180,7 +183,7 @@ export default function HomeScreen() {
       </ScrollView>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -304,3 +307,5 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
 });
+
+export default HomeScreen;
