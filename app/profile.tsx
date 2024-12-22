@@ -1,26 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Card, Colors, TextField, Button, Avatar } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { observer } from 'mobx-react';
+import { appStore } from '../store/appStore';
 
 const { width } = Dimensions.get('window');
 
-export default function ProfileScreen() {
-  const [profileData, setProfileData] = useState({
-    name: 'John Doe',
-    email: 'john.doe@email.com',
-    phone: '+90 555 123 4567',
-    birthDate: '01/01/1990',
-    bloodType: 'A+',
-    address: 'Atatürk Mah. Cumhuriyet Cad. No:123 Istanbul',
-    emergencyContact: 'Jane Doe - +90 555 765 4321',
-  });
+const ProfileScreen = observer(() => {
+  useEffect(() => {
+    console.log("istek attım");
+    appStore.getUserProfile();
+  }, []);
+
+  const [profileData, setProfileData] = useState({});
+
+  useEffect(() => {
+    setProfileData({
+      name: appStore.user?.name || '',
+      surname: appStore.user?.surname || '',
+      email: appStore.user?.email || '',
+      phone: appStore.user?.phone || '',
+      birthDate: appStore.user?.birthDate || '',
+      bloodType: appStore.user?.bloodType || '',
+      address: appStore.user?.address || '',
+      emergencyContact: appStore.user?.emergencyContact || '',
+    });
+  }, [appStore.user]);
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleSave = () => {
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      console.log(profileData);
+      await appStore.updateProfile(profileData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Profile update error:', error);
+    }
   };
 
   return (
@@ -66,7 +84,7 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.inputWrapper}>
                   <TextField
-                    label="Ad Soyad"
+                    label="Ad"
                     value={profileData.name}
                     onChangeText={(text) => setProfileData({ ...profileData, name: text })}
                     editable={isEditing}
@@ -76,6 +94,25 @@ export default function ProfileScreen() {
                   />
                 </View>
               </View>
+              
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="person" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Soyad"
+                    value={profileData.surname}
+                    onChangeText={(text) => setProfileData({ ...profileData, surname: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+
+
 
               <View style={styles.fieldContainer}>
                  <View style={styles.iconContainer}>
@@ -205,7 +242,9 @@ export default function ProfileScreen() {
       </ScrollView>
     </View>
   );
-}
+});
+
+export default ProfileScreen;
 
 const styles = StyleSheet.create({
   container: {

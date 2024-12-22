@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 import { observer } from 'mobx-react';
 import { appStore } from '../store/appStore';
-import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
 
@@ -14,11 +13,15 @@ const LoginScreen = observer(() => {
   const [password, setPassword] = React.useState('');
 
   const handleLogin = () => {
-     appStore.login({
-       email,
-       password
-     }, router);
-  }
+    if(!email || !password) {
+      appStore.showToast('error', 'Hata', 'Lütfen tüm alanları doldurun');
+      return;
+    }
+      appStore.login({
+        email,
+        password
+      }, router);
+  };
 
   const handleRegisterPress = React.useCallback(() => {
     router.push('/register');
