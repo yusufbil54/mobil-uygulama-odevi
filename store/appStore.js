@@ -3,7 +3,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const API_URL = 'http://localhost:5001';
+const API_URL = 'http://192.168.0.102:5001';
 
 class AppStore {
     user = null;
@@ -68,7 +68,13 @@ class AppStore {
                 await AsyncStorage.setItem('token', response.data.token);
                 this.setUser(response.data);
                 this.showToast('success', 'Başarılı', 'Giriş yapıldı');
-                router.push('/home');
+                
+                // Admin ise admin paneline yönlendir
+                if (response.data.role === 'admin') {
+                    router.push('/admin-panel');
+                } else {
+                    router.push('/home');
+                }
             }
 
         } catch (error) {
@@ -153,6 +159,11 @@ class AppStore {
             this.setLoading(false);
         }
     }
+
+    get isAdmin() {
+        return this.user?.role === 'admin';
+    }
 }
+
 
 export const appStore = new AppStore();
