@@ -11,12 +11,16 @@ connectDB();
 
 const app = express();
 
-// Enable CORS
-app.use(cors());
+// CORS ayarlarını genişletelim
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Body parser
+// Body parser ayarlarını güncelleyelim
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
@@ -26,8 +30,9 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to the API' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+// Tüm IP'lerden gelen istekleri dinle
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
