@@ -10,9 +10,9 @@ const generateToken = (id) => {
 
 const registerUser = async (req, res) => {
     try {
-        const { name, surname, email, password } = req.body;
+        const { name, surname, tc, email, password } = req.body;
 
-        if (!name || !surname || !email || !password) {
+        if (!name || !surname || !tc || !email || !password) {
             return res.status(400).json({ message: 'Please add all fields' });
         }
 
@@ -26,6 +26,7 @@ const registerUser = async (req, res) => {
         const user = await User.create({
             name,
             surname,
+            tc,
             email,
             password,
         });
@@ -64,6 +65,7 @@ const loginUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 surname: user.surname,
+                tc: user.tc,
                 email: user.email,
                 role: user.role,
                 token: generateToken(user._id),
@@ -87,6 +89,7 @@ const getUserProfile = async (req, res) => {
             _id: user._id,
             name: user.name,
             surname: user.surname,
+            tc: user.tc,
             email: user.email,
             role: user.role,
             phone: user.phone,
@@ -104,6 +107,7 @@ const updateProfile = async (req, res) => {
     const {
         name,
         surname,
+        tc,
         phone,
         birthDate,
         bloodType,
@@ -120,6 +124,7 @@ const updateProfile = async (req, res) => {
 
     user.name = name || user.name;
     user.surname = surname || user.surname;
+    user.tc = tc || user.tc;
     user.phone = phone || user.phone;
     user.birthDate = birthDate || user.birthDate;
     user.bloodType = bloodType || user.bloodType;
@@ -134,6 +139,7 @@ const updateProfile = async (req, res) => {
             _id: updatedUser._id,
             name: updatedUser.name,
             surname: updatedUser.surname,
+            tc: updatedUser.tc,
             email: updatedUser.email,
             phone: updatedUser.phone,
             birthDate: updatedUser.birthDate,

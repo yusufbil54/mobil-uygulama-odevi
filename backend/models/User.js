@@ -10,6 +10,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a surname']
     },
+    tc: {
+        type: String,
+        required: [true, 'Please add a tc'],
+        unique: true,
+        match: [/^\d{11}$/, 'Please add a valid tc']
+    },
     email: {
         type: String,
         required: [true, 'Please add an email'],
