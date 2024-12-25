@@ -11,6 +11,7 @@ const { width } = Dimensions.get('window');
 const RegisterScreen = observer(() => {
   const [name, setName] = React.useState('');
   const [surname, setSurname] = React.useState('');
+  const [tc, setTc] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
@@ -18,6 +19,7 @@ const RegisterScreen = observer(() => {
     appStore.register({
       name,
       surname,
+      tc,
       email,
       password
     }, router);
@@ -74,7 +76,20 @@ const RegisterScreen = observer(() => {
                 <AntDesign name="user" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
               }
             />
-
+<TextField
+              text70
+              placeholder="TC Kimlik No"
+              floatingPlaceholder
+              containerStyle={styles.input}
+              value={tc}
+              onChangeText={setTc}
+              enableErrors
+              validate={['required', (value) => value.length == 11 || 'TC 11 karakter olmalıdır']}
+              validateOnStart
+              leadingAccessory={
+                <AntDesign name="user" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
+              }
+            />
             <TextField
               text70
               placeholder="E-posta"
@@ -114,7 +129,7 @@ const RegisterScreen = observer(() => {
               onPress={handleRegister}
               borderRadius={10}
               enableShadow
-              disabled={appStore.loading || !name || !surname || !email || password.length < 6}
+              disabled={appStore.loading || !name || tc.length != 11 || !surname || !email || password.length < 6}
             />
 
             <Button

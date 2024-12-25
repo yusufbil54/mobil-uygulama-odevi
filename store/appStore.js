@@ -3,7 +3,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const API_URL = 'http://192.168.0.102:5001';
+const API_URL = 'http://192.168.0.114:5001';
 
 class AppStore {
     user = null;

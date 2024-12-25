@@ -157,6 +157,7 @@ const AdminPanel = () => {
                             <AntDesign name="search1" size={20} color={Colors.grey30} style={styles.searchIcon} />
                             <TextField
                                 placeholder="Hasta Adı Soyadı"
+                                placeholderTextColor={Colors.grey40}
                                 value={searchName}
                                 onChangeText={setSearchName}
                                 fieldStyle={styles.searchInput}
