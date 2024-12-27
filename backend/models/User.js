@@ -30,23 +30,18 @@ const userSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        default: ''
     },
     birthDate: {
         type: String,
-        default: ''
     },
     bloodType: {
         type: String,
-        default: ''
     },
     address: {
         type: String,
-        default: ''
     },
     emergencyContact: {
         type: String,
-        default: ''
     },
     role: {
         type: String,
@@ -59,7 +54,6 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Encrypt password using bcrypt
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) {
         next();
@@ -68,7 +62,6 @@ userSchema.pre('save', async function(next) {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
