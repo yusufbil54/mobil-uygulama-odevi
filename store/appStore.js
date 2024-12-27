@@ -1,9 +1,9 @@
-import { makeAutoObservable, makeObservable, observable } from 'mobx';
+import { makeAutoObservable, makeObservable, observable, action } from 'mobx';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const API_URL = 'http://172.20.10.6:5001';
+export const API_URL = 'http://192.168.0.102:5001';
 
 class AppStore {
     user = null;
@@ -16,6 +16,8 @@ class AppStore {
             loading: observable,
             error: observable,
             token: observable,
+            setUser: action,
+            updateProfile: action
         });
         this.getToken();
 
@@ -36,9 +38,9 @@ class AppStore {
         this.token = await AsyncStorage.getItem('token');
     }
 
-    setUser(user) {
+    setUser = action((user) => {
         this.user = user;
-    }
+    });
 
     setLoading(status) {
         this.loading = status;
@@ -132,7 +134,7 @@ class AppStore {
             });
             this.setUser(response.data);
         } catch (error) {
-            console.error('User profile fetch error:', error);
+            console.error('Get profile error:', error);
         }
     }
 
@@ -144,16 +146,15 @@ class AppStore {
                     Authorization: `Bearer ${this.token}`
                 }
             });
-
+            
             if (response.data.success) {
                 this.setUser(response.data.data);
-                this.showToast('success', 'Başarılı', 'Profil bilgileri güncellendi');
-                return response.data;
+                this.showToast('success', 'Başarılı', 'Profil güncellendi');
             }
+            return response.data;
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Profil güncellenirken bir hata oluştu';
-            this.setError(errorMessage);
-            this.showToast('error', 'Hata', errorMessage);
+            console.error('Update profile error:', error);
+            this.showToast('error', 'Hata', 'Profil güncellenirken bir hata oluştu');
             throw error;
         } finally {
             this.setLoading(false);

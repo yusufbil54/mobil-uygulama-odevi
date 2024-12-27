@@ -98,11 +98,7 @@ const getUserProfile = async (req, res) => {
             tc: user.tc,
             email: user.email,
             role: user.role,
-            phone: user.phone,
             birthDate: user.birthDate,
-            bloodType: user.bloodType,
-            address: user.address,
-            emergencyContact: user.emergencyContact,
         });
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -110,51 +106,39 @@ const getUserProfile = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-    const {
-        name,
-        surname,
-        tc,
-        phone,
-        birthDate,
-        bloodType,
-        address,
-        emergencyContact
-    } = req.body;
+    try {
+        const user = await User.findById(req.user._id);
 
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-        res.status(404);
-        throw new Error('User not found');
-    }
-
-    user.name = name || user.name;
-    user.surname = surname || user.surname;
-    user.tc = tc || user.tc;
-    user.phone = phone || user.phone;
-    user.birthDate = birthDate || user.birthDate;
-    user.bloodType = bloodType || user.bloodType;
-    user.address = address || user.address;
-    user.emergencyContact = emergencyContact || user.emergencyContact;
-
-    const updatedUser = await user.save();
-
-    res.status(200).json({
-        success: true,
-        data: {
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            surname: updatedUser.surname,
-            tc: updatedUser.tc,
-            email: updatedUser.email,
-            phone: updatedUser.phone,
-            birthDate: updatedUser.birthDate,
-            bloodType: updatedUser.bloodType,
-            address: updatedUser.address,
-            emergencyContact: updatedUser.emergencyContact,
-            role: updatedUser.role
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kullanıcı bulunamadı'
+            });
         }
-    });
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { $set: req.body },
+            { new: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            data: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                surname: updatedUser.surname,
+                email: updatedUser.email,
+                birthDate: updatedUser.birthDate,
+                role: updatedUser.role
+            }
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
 };
 
 module.exports = {

@@ -3,6 +3,9 @@ import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Button, Colors, TextField, Card } from 'react-native-ui-lib';
 import { Stack, useRouter } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import Toast from 'react-native-toast-message';
+import {  API_URL, appStore } from '../store/appStore';
 
 
 const { width } = Dimensions.get('window');
@@ -33,26 +36,52 @@ const TestEntry = () => {
         setCalculatedResults(results);
     };
 
-    const handleSave = () => {
-        const newTestResult = {
-            id: Date.now().toString(), // Benzersiz bir ID oluştur
-            ...newTest,
-            value: parseFloat(newTest.value), // Değeri sayıya çevir
-            result: calculatedResults, // Hesaplanan sonucu ekle
-        };
+    const handleSave = async () => {
+        try {
+            // Debug için veriyi kontrol et
+            console.log('Gönderilecek test verisi:', {
+                patientTc: newTest.patientTc,
+                testType: newTest.testType,
+                value: parseFloat(newTest.value),
+                results: calculatedResults
+            });
 
-        // Veriyi sıfırla
-        setNewTest({
-            patientName: '',
-            patientTc: '',
-            birthDate: '',
-            testType: '',
-            value: '',
-        });
-        setCalculatedResults(null);
+            const testData = {
+                patientTc: newTest.patientTc,
+                testType: newTest.testType,
+                value: parseFloat(newTest.value),
+                results: calculatedResults
+            };
 
-        // Admin paneline dön
-        router.push('/admin-panel');
+            // Token'ı kontrol et
+            console.log('Token:', appStore.token);
+
+            const response = await axios.post(`${API_URL}/api/tests/add`, testData, {
+                headers: {
+                    Authorization: `Bearer ${appStore.token}`
+                }
+            });
+
+            // Response'u kontrol et
+            console.log('API Response:', response.data);
+
+            if (response.data.success) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Başarılı',
+                    text2: 'Test sonucu kaydedildi'
+                });
+                router.push('/admin-panel');
+            }
+        } catch (error: any) {
+            // Hata detaylarını göster
+            console.error('Test kayıt hatası:', error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: error.response?.data?.message || 'Test kaydedilirken bir hata oluştu'
+            });
+        }
     };
 
     return (
@@ -84,8 +113,8 @@ const TestEntry = () => {
                     <TextField
                         placeholder="TC Kimlik No"
                         placeholderTextColor={Colors.grey40}
-                        value={newTest.patientName}
-                        onChangeText={(text) => setNewTest({ ...newTest, patientName: text })}
+                        value={newTest.patientTc}
+                        onChangeText={(text) => setNewTest({ ...newTest, patientTc: text })}
                         marginB-12
                         style={styles.inputField}
                     />

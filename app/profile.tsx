@@ -8,23 +8,41 @@ import { appStore } from '../store/appStore';
 
 const { width } = Dimensions.get('window');
 
+interface User {
+    _id: string;
+    name: string;
+    surname: string;
+    email: string;
+    birthDate: string;
+    role: string;
+}
+
+interface ProfileData {
+    name: string;
+    surname: string;
+    email: string;
+    birthDate: string;
+}
+
 const ProfileScreen = observer(() => {
   useEffect(() => {
     appStore.getUserProfile();
   }, []);
 
-  const [profileData, setProfileData] = useState({});
+  const [profileData, setProfileData] = useState<ProfileData>({
+    name: '',
+    surname: '',
+    email: '',
+    birthDate: ''
+  });
 
   useEffect(() => {
+    const user = appStore.user as User | null;
     setProfileData({
-      name: appStore.user?.name || '',
-      surname: appStore.user?.surname || '',
-      email: appStore.user?.email || '',
-      phone: appStore.user?.phone || '',
-      birthDate: appStore.user?.birthDate || '',
-      bloodType: appStore.user?.bloodType || '',
-      address: appStore.user?.address || '',
-      emergencyContact: appStore.user?.emergencyContact || '',
+      name: user?.name || '',
+      surname: user?.surname || '',
+      email: user?.email || '',
+      birthDate: user?.birthDate || '',
     });
   }, [appStore.user]);
 
@@ -130,22 +148,6 @@ const ProfileScreen = observer(() => {
                 </View>
               </View>
 
-              <View style={styles.fieldContainer}>
-                <View style={styles.iconContainer}>
-                  <MaterialIcons name="phone" size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.inputWrapper}>
-                  <TextField
-                    label="Telefon"
-                    value={profileData.phone}
-                    onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                    editable={isEditing}
-                    style={styles.input}
-                    labelStyle={styles.labelText}
-                    color={Colors.grey10}
-                  />
-                </View>
-              </View>
 
               <View style={styles.fieldContainer}>
                 <View style={styles.iconContainer}>
@@ -164,58 +166,7 @@ const ProfileScreen = observer(() => {
                 </View>
               </View>
 
-              <View style={styles.fieldContainer}>
-                <View style={styles.iconContainer}>
-                  <MaterialIcons name="opacity" size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.inputWrapper}>
-                  <TextField
-                    label="Kan Grubu"
-                    value={profileData.bloodType}
-                    onChangeText={(text) => setProfileData({ ...profileData, bloodType: text })}
-                    editable={isEditing}
-                    style={styles.input}
-                    labelStyle={styles.labelText}
-                    color={Colors.grey10}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.fieldContainer}>
-                <View style={styles.iconContainer}>
-                  <MaterialIcons name="location-on" size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.inputWrapper}>
-                  <TextField
-                    label="Adres"
-                    value={profileData.address}
-                    onChangeText={(text) => setProfileData({ ...profileData, address: text })}
-                    editable={isEditing}
-                    multiline
-                    numberOfLines={3}
-                    style={[styles.input, styles.multilineInput]}
-                    labelStyle={styles.labelText}
-                    color={Colors.grey10}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.fieldContainer}>
-                <View style={styles.iconContainer}>
-                  <MaterialIcons name="emergency" size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.inputWrapper}>
-                  <TextField
-                    label="Acil Durum Kontağı"
-                    value={profileData.emergencyContact}
-                    onChangeText={(text) => setProfileData({ ...profileData, emergencyContact: text })}
-                    editable={isEditing}
-                    style={styles.input}
-                    labelStyle={styles.labelText}
-                    color={Colors.grey10}
-                  />
-                </View>
-              </View>
+              
             </View>
 
             {isEditing && (
