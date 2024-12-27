@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Card, Colors } from 'react-native-ui-lib';
 import { Stack } from 'expo-router';
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -78,78 +78,83 @@ const mockData: TestResult[] = [
     },
 ];
 
+interface TestResultCardProps {
+    item: TestResult;
+}
+
 const AdminAllResults = () => {
-    const getStatusInfo = (value: number, range: { min: number; max: number }) => {
-        if (value > range.max) {
-            return {
-                status: 'Yüksek',
-                color: '#FF4444',
-                icon: 'arrow-upward'
-            };
-        } else if (value < range.min) {
-            return {
-                status: 'Düşük',
-                color: '#4CAF50',
-                icon: 'arrow-downward'
-            };
+    const getResultIcon = (result: string | undefined) => {
+        switch(result?.toLowerCase()) {
+            case 'düşük':
+                return <MaterialCommunityIcons name="arrow-down-bold-circle" size={24} color="#FF4B4B" />;
+            case 'yüksek':
+                return <MaterialCommunityIcons name="arrow-up-bold-circle" size={24} color="#FF9500" />;
+            case 'normal':
+                return <MaterialCommunityIcons name="check-circle" size={24} color="#4CAF50" />;
+            default:
+                return null;
         }
-        return {
-            status: 'Normal',
-            color: '#2196F3',
-            icon: 'remove'
-        };
     };
+
+    const TestResultCard = ({ item }: TestResultCardProps) => (
+        <Card key={item.id} style={styles.resultCard} enableShadow>
+            <View style={styles.cardHeader}>
+                <Text text65 color={Colors.grey10}>{item.patientName}</Text>
+                <Text text80 color={Colors.grey30}>{item.testDate}</Text>
+            </View>
+            
+            <View style={styles.testInfo}>
+                <Text text70 color={Colors.grey20}>Test: {item.testType}</Text>
+                <Text text70 color={Colors.blue30}>Değer: {item.value}</Text>
+            </View>
+
+            <View style={styles.guidelinesContainer}>
+                <View style={styles.guidelineRow}>
+                    <Text style={styles.guidelineLabel}>WHO</Text>
+                    {getResultIcon('normal')}
+                </View>
+                <View style={styles.guidelineRow}>
+                    <Text style={styles.guidelineLabel}>Avrupa</Text>
+                    {getResultIcon('yüksek')}
+                </View>
+                <View style={styles.guidelineRow}>
+                    <Text style={styles.guidelineLabel}>Amerika</Text>
+                    {getResultIcon('düşük')}
+                </View>
+                <View style={styles.guidelineRow}>
+                    <Text style={styles.guidelineLabel}>Asya</Text>
+                    {getResultIcon('normal')}
+                </View>
+                <View style={styles.guidelineRow}>
+                    <Text style={styles.guidelineLabel}>Türkiye</Text>
+                    {getResultIcon('yüksek')}
+                </View>
+            </View>
+        </Card>
+    );
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-        <View row centerV>
-          <AntDesign 
-            name="arrowleft" 
-            size={24} 
-            color={Colors.primary} 
-            onPress={() => router.push('/admin-panel')}
-            style={styles.backButton}
-          />
-          <Text text50 color={Colors.grey10}>
-            Tüm Test Sonuçları
-          </Text>
-        </View>
-      </View>
+                <View row centerV>
+                    <AntDesign 
+                        name="arrowleft" 
+                        size={24} 
+                        color={Colors.primary} 
+                        onPress={() => router.push('/admin-panel')}
+                        style={styles.backButton}
+                    />
+                    <Text text50 color={Colors.grey10}>
+                        Tüm Test Sonuçları
+                    </Text>
+                </View>
+            </View>
             
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView}>
                 <View style={styles.content}>
-                    {mockData.map((item) => {
-                        const statusInfo = getStatusInfo(item.value, item.referenceRange);
-                        return (
-                            <Card key={item.id} style={styles.resultCard} enableShadow>
-                                <View row spread>
-                                    <View>
-                                        <Text text65 color={Colors.grey10} marginB-4>
-                                            {item.patientName}
-                                        </Text>
-                                        <Text text80 color={Colors.grey30}>
-                                            {item.testType}
-                                        </Text>
-                                        <Text text90 color={Colors.grey40}>
-                                            Referans: {item.referenceRange.min} - {item.referenceRange.max}
-                                        </Text>
-                                    </View>
-                                    <View right>
-                                        <Text style={[styles.valueText, { color: statusInfo.color }]}>
-                                            {item.value}
-                                        </Text>
-                                        <Text style={[styles.statusText, { color: statusInfo.color }]}>
-                                            {statusInfo.status}
-                                        </Text>
-                                        <Text text90 color={Colors.grey30}>
-                                            {item.testDate}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </Card>
-                        );
-                    })}
+                    {mockData.map((item) => (
+                        <TestResultCard key={item.id} item={item} />
+                    ))}
                 </View>
             </ScrollView>
         </View>
@@ -194,6 +199,36 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         textAlign: 'right',
         marginBottom: 4,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60,
+        paddingBottom: 8,
+    },
+    testInfo: {
+        marginBottom: 16,
+    },
+    guidelinesContainer: {
+        backgroundColor: Colors.grey70,
+        padding: 16,
+        borderRadius: 8,
+    },
+    guidelineRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60,
+    },
+    guidelineLabel: {
+        fontSize: 16,
+        color: Colors.grey20,
+        fontWeight: '500',
     },
 });
 

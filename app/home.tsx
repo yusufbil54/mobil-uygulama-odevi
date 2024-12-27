@@ -68,7 +68,7 @@ const HomeScreen = observer(() => {
             Hoş Geldiniz
           </Text>
           <Text text65 color={Colors.grey30}>
-            {appStore.user?.name} {appStore.user?.surname}
+            {(appStore.user as any)?.name} {(appStore.user as any)?.surname}
           </Text>
         </View>
         <View row centerV>

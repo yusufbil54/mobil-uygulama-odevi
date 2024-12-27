@@ -2,37 +2,39 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const protect = async (req, res, next) => {
-    let token;
+    try {
+        let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            // Get token from header
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
-
-            // Verify token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-            // Get user from the token
-            req.user = await User.findById(decoded.id).select('-password');
-
-            next();
-        } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: 'Not authorized' });
         }
-    }
 
-    if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
-    }
-};
+        if (!token) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
 
-const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+        // Token'ı decode et
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Admin kontrolü ekle
+        if (decoded.id === 'admin') {
+            req.user = { _id: 'admin', role: 'admin' };
+            return next();
+        }
+
+        // Normal kullanıcı için kontrol
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        req.user = user;
         next();
-    } else {
-        res.status(401).json({ message: 'Not authorized as an admin' });
+
+    } catch (error) {
+        console.error('Auth middleware error:', error);
+        res.status(401).json({ message: 'Not authorized' });
     }
 };
 
-module.exports = { protect, admin };
+module.exports = { protect };

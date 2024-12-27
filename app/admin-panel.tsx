@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Card, Button, Colors, TextField } from 'react-native-ui-lib';
 import { Stack, router } from 'expo-router';
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +16,13 @@ interface TestResult {
         min: number;
         max: number;
     };
+    results: {
+        who: string;
+        europe: string;
+        america: string;
+        asia: string;
+        turkey: string;
+    };
 }
 
 const mockData: TestResult[] = [
@@ -25,7 +32,14 @@ const mockData: TestResult[] = [
         testDate: '2024-01-10',
         testType: 'IgA',
         value: 450,
-        referenceRange: { min: 70, max: 400 }
+        referenceRange: { min: 70, max: 400 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
     {
         id: '2',
@@ -33,7 +47,14 @@ const mockData: TestResult[] = [
         testDate: '2024-01-15',
         testType: 'IgM',
         value: 120,
-        referenceRange: { min: 40, max: 230 }
+        referenceRange: { min: 40, max: 230 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
     {
         id: '3',
@@ -41,7 +62,14 @@ const mockData: TestResult[] = [
         testDate: '2024-01-12',
         testType: 'IgG',
         value: 550,
-        referenceRange: { min: 700, max: 1600 }
+        referenceRange: { min: 700, max: 1600 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
     {
         id: '4',
@@ -49,7 +77,14 @@ const mockData: TestResult[] = [
         testDate: '2024-01-14',
         testType: 'IgG1',
         value: 500,
-        referenceRange: { min: 380, max: 930 }
+        referenceRange: { min: 380, max: 930 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
     {
         id: '5',
@@ -57,7 +92,14 @@ const mockData: TestResult[] = [
         testDate: '2024-01-13',
         testType: 'IgG2',
         value: 850,
-        referenceRange: { min: 240, max: 700 }
+        referenceRange: { min: 240, max: 700 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
     {
         id: '6',
@@ -65,7 +107,14 @@ const mockData: TestResult[] = [
         testDate: '2024-01-11',
         testType: 'IgG3',
         value: 55,
-        referenceRange: { min: 20, max: 110 }
+        referenceRange: { min: 20, max: 110 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
     {
         id: '7',
@@ -73,9 +122,70 @@ const mockData: TestResult[] = [
         testDate: '2024-01-16',
         testType: 'IgG4',
         value: 10,
-        referenceRange: { min: 30, max: 200 }
+        referenceRange: { min: 30, max: 200 },
+        results: {
+            who: 'normal',
+            europe: 'normal',
+            america: 'normal',
+            asia: 'normal',
+            turkey: 'normal'
+        }
     },
 ];
+
+const getResultIcon = (result: string | undefined) => {
+    switch(result?.toLowerCase()) {
+        case 'düşük':
+            return <MaterialCommunityIcons name="arrow-down-bold-circle" size={24} color="#FF4B4B" />;
+        case 'yüksek':
+            return <MaterialCommunityIcons name="arrow-up-bold-circle" size={24} color="#FF9500" />;
+        case 'normal':
+            return <MaterialCommunityIcons name="check-circle" size={24} color="#4CAF50" />;
+        default:
+            return null;
+    }
+};
+
+interface TestResultCardProps {
+    item: TestResult;
+}
+
+const TestResultCard = ({ item }: TestResultCardProps) => (
+    <Card key={item.id} style={styles.resultCard} enableShadow>
+        <View style={styles.cardHeader}>
+            <Text text65 color={Colors.grey10}>{item.patientName}</Text>
+            <Text text80 color={Colors.grey30}>{item.testDate}</Text>
+        </View>
+        
+        <View style={styles.testInfo}>
+            <Text text70 color={Colors.grey20}>Test: {item.testType}</Text>
+            <Text text70 color={Colors.blue30}>Değer: {item.value}</Text>
+        </View>
+
+        <View style={styles.guidelinesContainer}>
+            <View style={styles.guidelineRow}>
+                <Text style={styles.guidelineLabel}>WHO</Text>
+                {getResultIcon(item.results.who)}
+            </View>
+            <View style={styles.guidelineRow}>
+                <Text style={styles.guidelineLabel}>Avrupa</Text>
+                {getResultIcon(item.results.europe)}
+            </View>
+            <View style={styles.guidelineRow}>
+                <Text style={styles.guidelineLabel}>Amerika</Text>
+                {getResultIcon(item.results.america)}
+            </View>
+            <View style={styles.guidelineRow}>
+                <Text style={styles.guidelineLabel}>Asya</Text>
+                {getResultIcon(item.results.asia)}
+            </View>
+            <View style={styles.guidelineRow}>
+                <Text style={styles.guidelineLabel}>Türkiye</Text>
+                {getResultIcon(item.results.turkey)}
+            </View>
+        </View>
+    </Card>
+);
 
 const AdminPanel = () => {
     const [searchName, setSearchName] = useState<string>('');
@@ -139,16 +249,7 @@ const AdminPanel = () => {
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
-                    <View style={[styles.headerRow, { alignItems: 'center', justifyContent: 'center' }]}>
-                        <Button
-                            label="Yeni Test Ekle"
-                            onPress={() => router.push('/testEntry')}
-                            backgroundColor={Colors.primary}
-                            borderRadius={8}
-                            marginT-10
-                            style={styles.fullWidthButton}
-                        />
-                    </View>
+                    
                     <Card style={styles.searchCard} enableShadow>
                         <Text text65 color={Colors.grey10} marginB-10>
                             Hasta Ara
@@ -174,10 +275,28 @@ const AdminPanel = () => {
                             borderRadius={8}
                         />
                     </Card>
+                    <View style={[styles.headerRow, { alignItems: 'center', justifyContent: 'center' }]}>
+                        <Button
+                            label="Yeni Test Ekle"
+                            onPress={() => router.push('/testEntry')}
+                            backgroundColor={Colors.primary}
+                            borderRadius={8}
+                            marginT-10
+                            style={styles.fullWidthButton}
+                        />
+                    </View>
+                    <View style={[styles.headerRow, { alignItems: 'center', justifyContent: 'center' }]}>
+                        <Button
+                            label="Yeni Klavuz Ekle"
+                            onPress={() => router.push('/testEntry')}
+                            backgroundColor={Colors.primary}
+                            borderRadius={8}
+                            marginT-10
+                            style={styles.fullWidthButton}
+                        />
+                    </View>
 
-                    
-
-
+                    {/* Test Sonuçları Bölümü - Geçici olarak gizlendi
                     <View style={styles.headerRow}>
                         <Text text65 color={Colors.grey10}>
                             Test Sonuçları
@@ -221,6 +340,7 @@ const AdminPanel = () => {
                             </Card>
                         );
                     })}
+                    */}
                 </View>
             </ScrollView>
         </View>
@@ -291,10 +411,11 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     resultCard: {
-        padding: 16,
-        marginBottom: 12,
+        padding: 20,
+        marginBottom: 16,
         backgroundColor: Colors.white,
         borderRadius: 12,
+        minHeight: 200,
     },
     valueText: {
         fontSize: 18,
@@ -313,6 +434,36 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 10,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60,
+        paddingBottom: 8,
+    },
+    testInfo: {
+        marginBottom: 16,
+    },
+    guidelinesContainer: {
+        backgroundColor: Colors.grey70,
+        padding: 16,
+        borderRadius: 8,
+    },
+    guidelineRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60,
+    },
+    guidelineLabel: {
+        fontSize: 16,
+        color: Colors.grey20,
+        fontWeight: '500',
     },
 });
 

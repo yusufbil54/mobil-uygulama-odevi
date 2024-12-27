@@ -13,16 +13,22 @@ const registerUser = async (req, res) => {
         const { name, surname, tc, email, password } = req.body;
 
         if (!name || !surname || !tc || !email || !password) {
-            return res.status(400).json({ message: 'Please add all fields' });
+            return res.status(400).json({ message: 'Lütfen tüm alanları doldurun' });
         }
 
-        // Check if user exists
+        // TC kontrolü
+        const tcExists = await User.findOne({ tc });
+        if (tcExists) {
+            return res.status(400).json({ message: 'Bu TC kimlik numarası zaten kayıtlı' });
+        }
+
+        // Email kontrolü
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'Bu email adresi zaten kayıtlı' });
         }
 
-        // Create user
+        // Kullanıcı oluştur
         const user = await User.create({
             name,
             surname,
@@ -34,7 +40,7 @@ const registerUser = async (req, res) => {
         if (user) {
             res.status(201).json({
                 success: true,
-                message: 'User created successfully',
+                message: 'Kullanıcı başarıyla oluşturuldu',
             });
         }
     } catch (error) {
@@ -92,11 +98,7 @@ const getUserProfile = async (req, res) => {
             tc: user.tc,
             email: user.email,
             role: user.role,
-            phone: user.phone,
             birthDate: user.birthDate,
-            bloodType: user.bloodType,
-            address: user.address,
-            emergencyContact: user.emergencyContact,
         });
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -104,51 +106,39 @@ const getUserProfile = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-    const {
-        name,
-        surname,
-        tc,
-        phone,
-        birthDate,
-        bloodType,
-        address,
-        emergencyContact
-    } = req.body;
+    try {
+        const user = await User.findById(req.user._id);
 
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-        res.status(404);
-        throw new Error('User not found');
-    }
-
-    user.name = name || user.name;
-    user.surname = surname || user.surname;
-    user.tc = tc || user.tc;
-    user.phone = phone || user.phone;
-    user.birthDate = birthDate || user.birthDate;
-    user.bloodType = bloodType || user.bloodType;
-    user.address = address || user.address;
-    user.emergencyContact = emergencyContact || user.emergencyContact;
-
-    const updatedUser = await user.save();
-
-    res.status(200).json({
-        success: true,
-        data: {
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            surname: updatedUser.surname,
-            tc: updatedUser.tc,
-            email: updatedUser.email,
-            phone: updatedUser.phone,
-            birthDate: updatedUser.birthDate,
-            bloodType: updatedUser.bloodType,
-            address: updatedUser.address,
-            emergencyContact: updatedUser.emergencyContact,
-            role: updatedUser.role
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kullanıcı bulunamadı'
+            });
         }
-    });
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { $set: req.body },
+            { new: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            data: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                surname: updatedUser.surname,
+                email: updatedUser.email,
+                birthDate: updatedUser.birthDate,
+                role: updatedUser.role
+            }
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
 };
 
 module.exports = {

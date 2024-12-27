@@ -28,19 +28,7 @@ const userSchema = new mongoose.Schema({
         minlength: 6,
         select: false
     },
-    phone: {
-        type: String,
-    },
     birthDate: {
-        type: String,
-    },
-    bloodType: {
-        type: String,
-    },
-    address: {
-        type: String,
-    },
-    emergencyContact: {
         type: String,
     },
     role: {
