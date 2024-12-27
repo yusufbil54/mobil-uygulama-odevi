@@ -23,7 +23,7 @@ class AppStore {
 
     showToast(type, text1, text2) {
         Toast.show({
-            type: type, // success, error, info
+            type: type, 
             text1: text1,
             text2: text2,
             position: 'top',

@@ -10,7 +10,6 @@ const { width } = Dimensions.get('window');
 
 const ProfileScreen = observer(() => {
   useEffect(() => {
-    console.log("istek attım");
     appStore.getUserProfile();
   }, []);
 
