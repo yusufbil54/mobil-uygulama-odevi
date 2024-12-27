@@ -13,16 +13,22 @@ const registerUser = async (req, res) => {
         const { name, surname, tc, email, password } = req.body;
 
         if (!name || !surname || !tc || !email || !password) {
-            return res.status(400).json({ message: 'Please add all fields' });
+            return res.status(400).json({ message: 'Lütfen tüm alanları doldurun' });
         }
 
-        // Check if user exists
+        // TC kontrolü
+        const tcExists = await User.findOne({ tc });
+        if (tcExists) {
+            return res.status(400).json({ message: 'Bu TC kimlik numarası zaten kayıtlı' });
+        }
+
+        // Email kontrolü
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'Bu email adresi zaten kayıtlı' });
         }
 
-        // Create user
+        // Kullanıcı oluştur
         const user = await User.create({
             name,
             surname,
@@ -34,7 +40,7 @@ const registerUser = async (req, res) => {
         if (user) {
             res.status(201).json({
                 success: true,
-                message: 'User created successfully',
+                message: 'Kullanıcı başarıyla oluşturuldu',
             });
         }
     } catch (error) {
