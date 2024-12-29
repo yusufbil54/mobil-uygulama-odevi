@@ -4,8 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { configure } from 'mobx';
 
+export const API_URL = 'http://172.20.10.6:5001';
 //export const API_URL = 'http://192.168.0.102:5001';
-export const API_URL = 'http://localhost:5001';
+//export const API_URL = 'http://localhost:5001';
 
 class AppStore {
     user = null;
@@ -72,10 +73,12 @@ class AppStore {
         console.log('Tokennn:', this.token);
         console.log('Userrr:', this.user);
         if (this.token) {
-            if(this.user.role === 'admin') {
+            if (this.user && this.user.role === 'admin') {
                 router.push('/admin-panel');
-            } else {
+            } else if (this.user) {
                 router.push('/home');
+            } else {
+                router.push('/');
             }
         } else {
             router.push('/');

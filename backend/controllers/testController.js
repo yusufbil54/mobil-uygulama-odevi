@@ -95,8 +95,69 @@ const getAllTests = async (req, res) => {
     }
 };
 
+// Test tiplerini getir
+const getTestTypes = async (req, res) => {
+    try {
+        const tests = await Test.find()
+        
+        res.json({
+            success: true,
+            data: tests
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// TC'ye göre test sonuçlarını getir
+const getUserTestsByTc = async (req, res) => {
+    try {
+        const { tc } = req.params;
+
+        if (!tc) {
+            return res.status(400).json({
+                success: false,
+                message: 'TC kimlik numarası gereklidir'
+            });
+        }
+
+        // Önce TC'ye ait kullanıcıyı bul
+        const user = await User.findOne({ tc });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kullanıcı bulunamadı'
+            });
+        }
+
+        // Kullanıcının test sonuçlarını getir
+        const tests = await TestResult.find({ userId: user._id })
+            .populate('testType')
+            .sort({ date: -1 });
+
+        res.json({
+            success: true,
+            data: tests
+        });
+
+    } catch (error) {
+        console.error('Error in getUserTestsByTc:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     addTestResult,
     getUserTests,
-    getAllTests
+    getAllTests,
+    getTestTypes,
+    getUserTestsByTc
 }; 
