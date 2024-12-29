@@ -52,23 +52,9 @@ const loginUser = async (req, res) => {
         const { email, password } = req.body;
         const user = await User.findOne({ email }).select('+password');
 
-        // Admin kullanıcısı için özel kontrol
-        if (email === 'b211210072@gmail.com') {
-            if (password === '123456') {
-                res.json({
-                    _id: user?._id || 'admin',
-                    name: 'Admin',
-                    email: email,
-                    role: 'admin',
-                    token: generateToken('admin'),
-                });
-                return;
-            }
-        }
-
         if (user && (await user.matchPassword(password))) {
             res.json({
-                _id: user._id,
+                id: user._id,
                 name: user.name,
                 surname: user.surname,
                 tc: user.tc,

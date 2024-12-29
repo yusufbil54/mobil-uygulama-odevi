@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { View, Text, Button, Colors, TextField, Card } from 'react-native-ui-lib';
+import { View, Text, Button, Colors, TextField, Card, Picker } from 'react-native-ui-lib';
 import { Stack, useRouter } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {  API_URL, appStore } from '../store/appStore';
+import { API_URL, appStore } from '../store/appStore';
 
+interface Test {
+    _id: string;
+    name: string;
+}
 
 const { width } = Dimensions.get('window');
 
 const TestEntry = () => {
     const router = useRouter();
+    const [tests, setTests] = useState<Test[]>([]);
     const [newTest, setNewTest] = useState({
         patientName: '',
         patientTc: '',
@@ -20,6 +25,28 @@ const TestEntry = () => {
         value: '',
     });
     const [calculatedResults, setCalculatedResults] = useState<any>(null);
+
+    useEffect(() => {
+        fetchTests();
+    }, []);
+
+    const fetchTests = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/tests/all-tests`, {
+                headers: {
+                    Authorization: `Bearer ${appStore.token}`
+                }
+            });
+            setTests(response.data.data);
+        } catch (error) {
+            console.error('Error fetching tests:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Test tipleri yüklenirken bir hata oluştu'
+            });
+        }
+    };
 
     const handleCalculate = () => {
         const value = parseFloat(newTest.value);
@@ -126,14 +153,38 @@ const TestEntry = () => {
                         marginB-12
                         style={styles.inputField}
                     />
-                    <TextField
-                        placeholder="Tetkik Adı"
+                    <Picker
                         value={newTest.testType}
-                        placeholderTextColor={Colors.grey40} 
-                        onChangeText={(text) => setNewTest({ ...newTest, testType: text })}
-                        marginB-12
+                        onChange={(value: any) => value && setNewTest({ ...newTest, testType: value })}
                         style={styles.inputField}
-                    />
+                        marginB-12
+                        placeholder="Tetkik Seçiniz"
+                        showSearch
+                        searchPlaceholder="Test Ara..."
+                        searchStyle={styles.pickerSearch}
+                        enableModalBlur={false}
+                        useDialog={false}
+                        containerStyle={styles.pickerDropdown}
+                        renderPicker={() => {
+                            const selectedTest = tests.find(test => test._id === newTest.testType);
+                            return (
+                                <View style={styles.pickerContainer}>
+                                    <Text style={styles.pickerText}>
+                                        {selectedTest ? selectedTest.name : "Tetkik Seçiniz"}
+                                    </Text>
+                                    <MaterialIcons name="arrow-drop-down" size={24} color={Colors.grey30} />
+                                </View>
+                            );
+                        }}
+                    >
+                        {tests.map((test) => (
+                            <Picker.Item 
+                                key={test._id} 
+                                value={test._id} 
+                                label={test.name}
+                            />
+                        ))}
+                    </Picker>
                     <TextField
                         placeholder="Test Değeri"
                         value={newTest.value}
@@ -254,6 +305,39 @@ const styles = StyleSheet.create({
     guidelineText: {
         fontSize: 16,
         color: Colors.grey20,
+    },
+    pickerField: {
+        paddingVertical: 8,
+    },
+    pickerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        height: 50,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        backgroundColor: Colors.white,
+    },
+    pickerText: {
+        fontSize: 16,
+        color: Colors.grey10,
+    },
+    pickerSearch: {
+        color: Colors.grey10,
+        paddingHorizontal: 12,
+        height: 40,
+        backgroundColor: Colors.grey70,
+        borderRadius: 8,
+    },
+    pickerDropdown: {
+        maxHeight: 200,
+        backgroundColor: Colors.white,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        marginTop: 4,
     },
 });
 

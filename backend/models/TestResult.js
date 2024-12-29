@@ -12,7 +12,8 @@ const testResultSchema = new mongoose.Schema({
         required: false // Kayıtlı olmayan hastalar için opsiyonel
     },
     testType: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test',
         required: true
     },
     value: {

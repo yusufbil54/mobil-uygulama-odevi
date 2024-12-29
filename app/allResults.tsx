@@ -1,203 +1,176 @@
-import React, { useState, useMemo } from 'react';
-import { Dimensions, ScrollView, StyleSheet } from 'react-native';
-import { View, Text, Card, Colors, Chip, TextField } from 'react-native-ui-lib';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Dimensions, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Card, Colors, TextField } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import { API_URL } from '../store/appStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
 
-const mockTestResults = [
-  {
-    id: 1,
-    date: '2024-03-15',
-    type: 'IgG',
-    value: 750,
-    status: 'normal',
-    unit: 'mg/dL',
-  },
-  {
-    id: 2,
-    date: '2024-03-15',
-    type: 'IgA',
-    value: 450,
-    status: 'high',
-    unit: 'mg/dL',
-  },
-  {
-    id: 3,
-    date: '2024-03-15',
-    type: 'IgM',
-    value: 150,
-    status: 'low',
-    unit: 'mg/dL',
-  },
-  {
-    id: 4,
-    date: '2024-03-14',
-    type: 'IgG1',
-    value: 380,
-    status: 'normal',
-    unit: 'mg/dL',
-  },
-  {
-    id: 5,
-    date: '2024-03-14',
-    type: 'IgG2',
-    value: 220,
-    status: 'high',
-    unit: 'mg/dL',
-  },
-  {
-    id: 6,
-    date: '2024-03-14',
-    type: 'IgG3',
-    value: 45,
-    status: 'normal',
-    unit: 'mg/dL',
-  },
-  {
-    id: 7,
-    date: '2024-03-14',
-    type: 'IgG4',
-    value: 85,
-    status: 'high',
-    unit: 'mg/dL',
-  },
-  {
-    id: 8,
-    date: '2024-03-14',
-    type: 'Hemoglobin',
-    value: 14.2,
-    status: 'normal',
-    unit: 'g/dL',
-  },
-  {
-    id: 9,
-    date: '2024-03-14',
-    type: 'Trombosit',
-    value: 250000,
-    status: 'normal',
-    unit: 'µL',
-  },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'normal':
-      return Colors.green30;
-    case 'high':
-      return Colors.red30;
-    case 'low':
-      return Colors.blue30;
-    default:
-      return Colors.grey30;
-  }
-};
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'normal':
-      return 'Normal';
-    case 'high':
-      return 'Yüksek';
-    case 'low':
-      return 'Düşük';
-    default:
-      return 'Belirsiz';
-  }
-};
+// Test sonucu için interface
+interface TestResult {
+    _id: string;
+    testType: {
+        _id: string;
+        name: string;
+    };
+    value: number;
+    date: string;
+    results: {
+        who: string;
+        europe: string;
+        america: string;
+        asia: string;
+        turkey: string;
+    };
+}
 
 export default function AllResultsScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [testResults, setTestResults] = useState<TestResult[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const filteredResults = useMemo(() => {
-    return mockTestResults.filter(result =>
-      result.type.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
+    useEffect(() => {
+        fetchTestResults();
+    }, []);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View row centerV>
-          <AntDesign 
-            name="arrowleft" 
-            size={24} 
-            color={Colors.primary} 
-            onPress={() => router.push('/home')}
-            style={styles.backButton}
-          />
-          <Text text50 color={Colors.grey10}>
-            Tüm Test Sonuçları
-          </Text>
-        </View>
-      </View>
+    const fetchTestResults = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const userId = await AsyncStorage.getItem('userId');
+            
+            if (!token || !userId) {
+                router.push('/');
+                return;
+            }
 
-      <View style={styles.searchContainer}>
-        <TextField
-          placeholder="Test türü ara... (örn: IgG, IgA)"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          leadingAccessory={
-            <AntDesign name="search1" size={20} color={Colors.grey30} style={styles.searchIcon} />
-          }
-          style={styles.searchInput}
-        />
-      </View>
+            const response = await axios.get(`${API_URL}/api/tests/user-tests/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {filteredResults.map((result) => (
-            <Card key={result.id} style={styles.resultCard} enableShadow>
-              <View style={styles.resultContainer}>
-                <View style={styles.resultHeader}>
-                  <Text style={styles.testName}>{result.type}</Text>
-                  <Text style={styles.dateText}>{result.date}</Text>
-                </View>
-                <View style={styles.resultValueSection}>
-                  <View style={styles.valueContainer}>
-                    <MaterialIcons 
-                      name={
-                        result.status === 'high' ? 'arrow-upward' :
-                        result.status === 'low' ? 'arrow-downward' : 'remove'
-                      } 
-                      size={24} 
-                      color={
-                        result.status === 'high' ? '#FF4444' :
-                        result.status === 'low' ? '#4CAF50' : '#2196F3'
-                      }
-                      style={styles.valueIcon}
+            if (response.data.success) {
+                setTestResults(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching test results:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Test sonuçları alınırken bir hata oluştu'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getStatusFromResults = (results: TestResult['results']) => {
+        const turkeyValue = results.turkey;
+        if (turkeyValue.includes('Yüksek')) return 'high';
+        if (turkeyValue.includes('Düşük')) return 'low';
+        return 'normal';
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'high': return Colors.red30;
+            case 'low': return Colors.blue30;
+            default: return Colors.green30;
+        }
+    };
+
+    const filteredResults = useMemo(() => {
+        return testResults.filter(result =>
+            result.testType.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [searchQuery, testResults]);
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.centerContent]}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <View row centerV>
+                    <AntDesign 
+                        name="arrowleft" 
+                        size={24} 
+                        color={Colors.primary} 
+                        onPress={() => router.push('/home')}
+                        style={styles.backButton}
                     />
-                    <Text style={[
-                      styles.valueText,
-                      result.status === 'high' && styles.highValue,
-                      result.status === 'normal' && styles.normalValue,
-                      result.status === 'low' && styles.lowValue,
-                    ]}>
-                      {result.value} {result.unit}
+                    <Text text50 color={Colors.grey10}>
+                        Tüm Test Sonuçları
                     </Text>
-                  </View>
-                  <View style={[
-                    styles.statusIndicator,
-                    result.status === 'high' && styles.highStatus,
-                    result.status === 'normal' && styles.normalStatus,
-                    result.status === 'low' && styles.lowStatus,
-                  ]}>
-                    <Text style={[
-                      styles.statusText,
-                      result.status === 'high' && styles.highStatusText,
-                      result.status === 'normal' && styles.normalStatusText,
-                      result.status === 'low' && styles.lowStatusText,
-                    ]}>{getStatusLabel(result.status)}</Text>
-                  </View>
                 </View>
-              </View>
-            </Card>
-          ))}
+            </View>
+
+            <View style={styles.searchContainer}>
+                <TextField
+                    placeholder="Test türü ara..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    leadingAccessory={
+                        <AntDesign name="search1" size={20} color={Colors.grey30} style={styles.searchIcon} />
+                    }
+                    style={styles.searchInput}
+                />
+            </View>
+
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                    {filteredResults.map((result) => (
+                        <Card key={result._id} style={styles.resultCard} enableShadow>
+                            <View style={styles.resultContainer}>
+                                <View style={styles.resultHeader}>
+                                    <Text style={styles.testName}>{result.testType.name}</Text>
+                                    <Text style={styles.dateText}>
+                                        {new Date(result.date).toLocaleDateString('tr-TR')}
+                                    </Text>
+                                </View>
+                                <View style={styles.resultValueSection}>
+                                    <View style={styles.valueContainer}>
+                                        <MaterialIcons 
+                                            name={
+                                                getStatusFromResults(result.results) === 'high' ? 'arrow-upward' :
+                                                getStatusFromResults(result.results) === 'low' ? 'arrow-downward' : 'remove'
+                                            } 
+                                            size={24} 
+                                            color={getStatusColor(getStatusFromResults(result.results))}
+                                            style={styles.valueIcon}
+                                        />
+                                        <Text style={styles.valueText}>
+                                            {result.value}
+                                        </Text>
+                                    </View>
+                                    <View style={[
+                                        styles.statusIndicator,
+                                        { backgroundColor: getStatusColor(getStatusFromResults(result.results)) + '20' }
+                                    ]}>
+                                        <Text style={[
+                                            styles.statusText,
+                                            { color: getStatusColor(getStatusFromResults(result.results)) }
+                                        ]}>
+                                            {result.results.turkey}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </Card>
+                    ))}
+                </View>
+            </ScrollView>
         </View>
-      </ScrollView>
-    </View>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
@@ -209,6 +182,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     backgroundColor: Colors.white,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backButton: {
     marginRight: 10,
