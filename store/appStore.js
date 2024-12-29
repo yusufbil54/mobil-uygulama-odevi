@@ -1,9 +1,11 @@
-import { makeAutoObservable, makeObservable, observable, action } from 'mobx';
+import { makeAutoObservable, makeObservable, observable, action, runInAction } from 'mobx';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import { configure } from 'mobx';
 
-export const API_URL = 'http://192.168.0.102:5001';
+//export const API_URL = 'http://192.168.0.102:5001';
+export const API_URL = 'http://localhost:5001';
 
 class AppStore {
     user = null;
@@ -17,15 +19,21 @@ class AppStore {
             error: observable,
             token: observable,
             setUser: action,
+            setLoading: action,
+            setError: action,
             updateProfile: action
         });
-        this.getToken();
-
+        
+        configure({
+            enforceActions: "always"
+        });
+        
+        this.getTokenAndUserInfo();
     }
 
     showToast(type, text1, text2) {
         Toast.show({
-            type: type, 
+            type: type,
             text1: text1,
             text2: text2,
             position: 'top',
@@ -34,25 +42,41 @@ class AppStore {
         });
     }
 
-    async getToken() {
-        this.token = await AsyncStorage.getItem('token');
+    async getTokenAndUserInfo() {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const userStr = await AsyncStorage.getItem('user');
+            
+            runInAction(() => {
+                this.token = token;
+                this.user = userStr ? JSON.parse(userStr) : null;
+            });
+        } catch (error) {
+            console.error('Error getting token and user info:', error);
+        }
     }
 
     setUser = action((user) => {
         this.user = user;
     });
 
-    setLoading(status) {
+    setLoading = action((status) => {
         this.loading = status;
-    }
+    });
 
-    setError(error) {
+    setError = action((error) => {
         this.error = error;
-    }
+    });
 
     checkToken(router) {
+        console.log('Tokennn:', this.token);
+        console.log('Userrr:', this.user);
         if (this.token) {
-            router.push('/home');
+            if(this.user.role === 'admin') {
+                router.push('/admin-panel');
+            } else {
+                router.push('/home');
+            }
         } else {
             router.push('/');
         }
@@ -60,7 +84,6 @@ class AppStore {
 
     async login(data, router) {
         try {
-            console.log(data);
             this.setLoading(true);
             this.setError(null);
 
@@ -68,10 +91,13 @@ class AppStore {
 
             if (response.data.token) {
                 await AsyncStorage.setItem('token', response.data.token);
-                this.setUser(response.data);
-                this.showToast('success', 'Başarılı', 'Giriş yapıldı');
+                await AsyncStorage.setItem('user', JSON.stringify(response.data));
                 
-                // Admin ise admin paneline yönlendir
+                runInAction(() => {
+                    this.setUser(response.data);
+                    this.showToast('success', 'Başarılı', 'Giriş yapıldı');
+                });
+
                 if (response.data.role === 'admin') {
                     router.push('/admin-panel');
                 } else {
@@ -85,7 +111,9 @@ class AppStore {
             this.showToast('error', 'Hata', errorMessage);
             throw error;
         } finally {
-            this.setLoading(false);
+            runInAction(() => {
+                this.setLoading(false);
+            });
         }
     }
 
@@ -107,7 +135,6 @@ class AppStore {
             this.setLoading(false);
         }
     }
-
     async logout(router) {
         try {
             await AsyncStorage.removeItem('token');
@@ -146,7 +173,7 @@ class AppStore {
                     Authorization: `Bearer ${this.token}`
                 }
             });
-            
+
             if (response.data.success) {
                 this.setUser(response.data.data);
                 this.showToast('success', 'Başarılı', 'Profil güncellendi');

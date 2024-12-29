@@ -16,11 +16,6 @@ const protect = async (req, res, next) => {
         // Token'ı decode et
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Admin kontrolü ekle
-        if (decoded.id === 'admin') {
-            req.user = { _id: 'admin', role: 'admin' };
-            return next();
-        }
 
         // Normal kullanıcı için kontrol
         const user = await User.findById(decoded.id);

@@ -14,6 +14,7 @@ interface User {
     surname: string;
     email: string;
     birthDate: string;
+    password: string;
     role: string;
 }
 
@@ -22,6 +23,7 @@ interface ProfileData {
     surname: string;
     email: string;
     birthDate: string;
+    password: string;
 }
 
 const ProfileScreen = observer(() => {
@@ -33,7 +35,8 @@ const ProfileScreen = observer(() => {
     name: '',
     surname: '',
     email: '',
-    birthDate: ''
+    birthDate: '',
+    password: ''
   });
 
   useEffect(() => {
@@ -43,6 +46,7 @@ const ProfileScreen = observer(() => {
       surname: user?.surname || '',
       email: user?.email || '',
       birthDate: user?.birthDate || '',
+      password: user?.password || ''
     });
   }, [appStore.user]);
 
@@ -158,6 +162,23 @@ const ProfileScreen = observer(() => {
                     label="Doğum Tarihi"
                     value={profileData.birthDate}
                     onChangeText={(text) => setProfileData({ ...profileData, birthDate: text })}
+                    editable={isEditing}
+                    style={styles.input}
+                    labelStyle={styles.labelText}
+                    color={Colors.grey10}
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.fieldContainer}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name="person" size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <TextField
+                    label="Şifre"
+                    value={profileData.password}
+                    onChangeText={(text) => setProfileData({ ...profileData, password: text })}
                     editable={isEditing}
                     style={styles.input}
                     labelStyle={styles.labelText}

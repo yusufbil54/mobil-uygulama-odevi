@@ -1,5 +1,6 @@
 const TestResult = require('../models/TestResult');
 const User = require('../models/User');
+const Test = require('../models/Test');
 
 const addTestResult = async (req, res) => {
     try {
@@ -47,10 +48,40 @@ const addTestResult = async (req, res) => {
 // Kullanıcının kendi test sonuçlarını getir
 const getUserTests = async (req, res) => {
     try {
-        const tests = await TestResult.find({ userId: req.user._id })
-            .select('testType value results date')
-            .sort('-date');
+        console.log('Requested userId:', req.params.id); // Debug için
 
+        if (!req.params.id) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required'
+            });
+        }
+
+        const tests = await TestResult.find({ userId: req.params.id })
+            .populate('testType', 'name')
+            .sort({ date: -1 });
+
+        console.log('Found tests:', tests); // Debug için
+
+        res.json({
+            success: true,
+            data: tests
+        });
+
+    } catch (error) {
+        console.error('Error in getUserTests:', error); // Debug için
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Tüm test tiplerini getir
+const getAllTests = async (req, res) => {
+    try {
+        const tests = await Test.find().select('name');
+        
         res.json({
             success: true,
             data: tests
@@ -66,5 +97,6 @@ const getUserTests = async (req, res) => {
 
 module.exports = {
     addTestResult,
-    getUserTests
+    getUserTests,
+    getAllTests
 }; 

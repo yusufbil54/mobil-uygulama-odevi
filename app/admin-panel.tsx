@@ -251,13 +251,13 @@ const AdminPanel = () => {
                 <View style={styles.content}>
                     
                     <Card style={styles.searchCard} enableShadow>
-                        <Text text65 color={Colors.grey10} marginB-10>
+                        <Text text60 color={Colors.grey10} marginB-15>
                             Hasta Ara
                         </Text>
                         <View style={styles.searchInputContainer}>
-                            <AntDesign name="search1" size={20} color={Colors.grey30} style={styles.searchIcon} />
+                            <AntDesign name="search1" size={24} color={Colors.grey30} style={styles.searchIcon} />
                             <TextField
-                                placeholder="Hasta Adı Soyadı"
+                                placeholder="Hasta TC"
                                 placeholderTextColor={Colors.grey40}
                                 value={searchName}
                                 onChangeText={setSearchName}
@@ -268,14 +268,15 @@ const AdminPanel = () => {
                         </View>
                         <Button
                             label="Ara"
-                            size={Button.sizes.medium}
+                            size={Button.sizes.large}
                             backgroundColor={Colors.primary}
                             onPress={handleSearch}
                             marginT-10
                             borderRadius={8}
+                            style={{ height: 50 }}
                         />
                     </Card>
-                    <View style={[styles.headerRow, { alignItems: 'center', justifyContent: 'center' }]}>
+                    <View style={styles.headerRow}>
                         <Button
                             label="Yeni Test Ekle"
                             onPress={() => router.push('/testEntry')}
@@ -285,10 +286,10 @@ const AdminPanel = () => {
                             style={styles.fullWidthButton}
                         />
                     </View>
-                    <View style={[styles.headerRow, { alignItems: 'center', justifyContent: 'center' }]}>
+                    <View style={styles.headerRow}>
                         <Button
-                            label="Yeni Klavuz Ekle"
-                            onPress={() => router.push('/testEntry')}
+                            label="Yeni Kılavuz Ekle"
+                            onPress={() => router.push('/guidelineEntry')}
                             backgroundColor={Colors.primary}
                             borderRadius={8}
                             marginT-10
@@ -363,23 +364,26 @@ const styles = StyleSheet.create({
         borderBottomColor: Colors.grey60,
     },
     fullWidthButton: {
-        width: '100%',
-        paddingVertical: 14,  // Increased height for the button
+        width: '95%',
+        paddingVertical: 14,
         marginBottom: 10,
+        alignSelf: 'center',
     },
     scrollView: {
         flex: 1,
     },
     content: {
-        padding: 20,
+        padding: 10,
         width: width > 500 ? 500 : '100%',
         alignSelf: 'center',
     },
     searchCard: {
-        padding: 20,
-        marginBottom: 20,
+        padding: 35,
+        marginBottom: 25,
         backgroundColor: Colors.white,
         borderRadius: 12,
+        width: '95%',
+        alignSelf: 'center',
     },
     searchInputContainer: {
         flexDirection: 'row',
@@ -387,16 +391,19 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.grey50,
         borderRadius: 8,
-        paddingHorizontal: 12,
-        height: 40,
+        paddingHorizontal: 20,
+        height: 60,
+        marginBottom: 20,
     },
     searchIcon: {
-        marginRight: 8,
+        marginRight: 15,
+        fontSize: 26,
     },
     searchInput: {
         flex: 1,
-        height: 40,
-        padding: 0,
+        height: 60,
+        fontSize: 18,
+        color: Colors.grey10,
     },
     statsContainer: {
         flexDirection: 'row',
@@ -431,9 +438,10 @@ const styles = StyleSheet.create({
     },
     headerRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
+        width: '100%',
     },
     cardHeader: {
         flexDirection: 'row',
