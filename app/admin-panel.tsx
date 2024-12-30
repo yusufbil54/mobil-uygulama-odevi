@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { View, Text, Card, Button, Colors, TextField } from 'react-native-ui-lib';
+import { View, Text, Card, Button, Colors, TextField, Picker } from 'react-native-ui-lib';
 import { Stack, router } from 'expo-router';
 import { AntDesign, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import axios from 'axios';
@@ -8,11 +8,40 @@ import Toast from 'react-native-toast-message';
 import { API_URL, appStore } from '../store/appStore';
 
 const { width } = Dimensions.get('window');
-
+interface Test {
+    _id: string;
+    name: string;
+    type: string;
+}
 const AdminPanel = () => {
     const [tc, setTc] = useState('');
+    const [tests, setTests] = useState<Test[]>([]);
+    const [selectedTest, setSelectedTest] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Test tiplerini yükle
+    useEffect(() => {
+        fetchTests();
+    }, []);
+
+    const fetchTests = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/tests/all-tests`, {
+                headers: {
+                    Authorization: `Bearer ${appStore.token}`
+                }
+            });
+            setTests(response.data.data);
+        } catch (error) {
+            console.error('Error fetching tests:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Test tipleri yüklenirken bir hata oluştu'
+            });
+        }
+    };
 
     const handleSearch = async () => {
         if (tc.length !== 11) {
@@ -31,12 +60,23 @@ const AdminPanel = () => {
             });
 
             if (response.data.success) {
-                setSearchResults(response.data.data);
-                if (response.data.data.length === 0) {
+                let results = response.data.data;
+                
+                // Seçili test tipine göre filtrele
+                if (selectedTest) {
+                    results = results.filter((test: any) => test.testType?._id === selectedTest);
+                }
+
+                setSearchResults(results);
+                
+                if (results.length === 0) {
+                    const selectedTestName = tests.find(t => t._id === selectedTest)?.name;
                     Toast.show({
                         type: 'info',
                         text1: 'Bilgi',
-                        text2: 'Bu TC numarasına ait test sonucu bulunamadı'
+                        text2: selectedTest 
+                            ? `Bu TC numarasına ait ${selectedTestName} sonucu bulunamadı`
+                            : 'Bu TC numarasına ait test sonucu bulunamadı'
                     });
                 }
             }
@@ -122,12 +162,44 @@ const AdminPanel = () => {
                     <View style={styles.searchContainer}>
                         <TextField
                             placeholder="TC Kimlik No"
+                            placeholderTextColor={Colors.grey40}
                             value={tc}
                             onChangeText={setTc}
                             style={styles.searchInput}
                             maxLength={11}
                             keyboardType="numeric"
                         />
+                        <Picker
+                            value={selectedTest}
+                            onChange={(value: any) => value && setSelectedTest(value)}
+                            style={styles.testTypePicker}
+                            placeholder="Test Seçin (Opsiyonel)"
+                            showSearch
+                            searchPlaceholder="Test Ara..."
+                            searchStyle={styles.pickerSearch}
+                            enableModalBlur={false}
+                            useDialog={false}
+                            renderPicker={() => {
+                                const selected = tests.find(test => test._id === selectedTest);
+                                return (
+                                    <View style={styles.pickerContainer}>
+                                        <Text style={styles.pickerText}>
+                                            {selected ? selected.name : "Test Seçin"}
+                                        </Text>
+                                        <MaterialIcons name="arrow-drop-down" size={24} color={Colors.grey30} />
+                                    </View>
+                                );
+                            }}
+                        >
+                            <Picker.Item key="all" value="" label="Tüm Testler" />
+                            {tests.map((test) => (
+                                <Picker.Item 
+                                    key={test._id} 
+                                    value={test._id} 
+                                    label={test.name}
+                                />
+                            ))}
+                        </Picker>
                         <Button
                             label={loading ? "Aranıyor..." : "Ara"}
                             size={Button.sizes.medium}
@@ -216,22 +288,35 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    flexDirection: 'column', // Yatay hizalamayı dikeye çevir
+    alignItems: 'stretch', // Elemanların genişliklerini hizalamak için
+    marginBottom: 10, // Alt boşluk ekle
     },
     searchInput: {
-        width: width * 0.55,
-        marginRight: 10,
-        height: 45,
-        borderWidth: 1,
-        borderColor: Colors.grey50,
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        backgroundColor: Colors.grey70,
+    flex: 1, // Esnek genişlik kullan
+    height: 45,
+    borderWidth: 1,
+    borderColor: Colors.grey50,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    backgroundColor: Colors.white,
+    marginBottom: 10,
+    fontSize: 16,
+    color: Colors.grey40,
+    },
+    testTypePicker: {
+    flex: 1, // Esnek genişlik kullan
+    height: 45,
+    borderWidth: 1,
+    borderColor: Colors.grey50,
+    borderRadius: 8,
+    backgroundColor: Colors.grey40,
+    marginBottom: 10,
     },
     searchButton: {
-        height: 45,
-        minWidth: 100,
+    height: 45,
+    minWidth: '100%', // Butonu tam genişlik yap
+    marginTop: 10, // Buton ile üstündeki alan arasında boşluk ekle
     },
     resultCard: {
         padding: 15,
@@ -239,7 +324,48 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
         borderLeftWidth: 4,
         borderLeftColor: Colors.primary,
-    }
+    },
+    inputField: {
+        height: 50,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        fontSize: 16,
+    },
+    pickerField: {
+        paddingVertical: 8,
+    },
+    pickerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        height: 50,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        backgroundColor: Colors.white,
+    },
+    pickerText: {
+        fontSize: 16,
+        color: Colors.grey40,
+    },
+    pickerSearch: {
+        color: Colors.grey10,
+        paddingHorizontal: 12,
+        height: 40,
+        backgroundColor: Colors.grey70,
+        borderRadius: 8,
+    },
+    pickerDropdown: {
+        maxHeight: 200,
+        backgroundColor: Colors.white,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        marginTop: 4,
+    },
 });
 
 export default AdminPanel;
