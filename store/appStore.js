@@ -4,9 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { configure } from 'mobx';
 
-export const API_URL = 'http://172.20.10.6:5001';
-//export const API_URL = 'http://192.168.0.102:5001';
-//export const API_URL = 'http://localhost:5001';
+//export const API_URL = 'http://172.20.10.6:5001'; //asli
+//export const API_URL = 'http://192.168.0.102:5001'; //ev
+export const API_URL = 'http://localhost:5001';
 
 class AppStore {
     user = null;
