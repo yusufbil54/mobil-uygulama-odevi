@@ -1,26 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Dimensions, ImageBackground, Alert } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 import { observer } from 'mobx-react';
 import { appStore } from '../store/appStore';
+import { Ionicons } from '@expo/vector-icons';
+import { Switch } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 const LoginScreen = observer(() => {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
+  useEffect(() => {
+    if (appStore.savedCredentials) {
+      setEmail(appStore.savedCredentials.email);
+      setPassword(appStore.savedCredentials.password);
+      setRememberMe(true);
+    }
+  }, [appStore.savedCredentials]);
+
+  const handleLogin = async () => {
     if(!email || !password) {
       appStore.showToast('error', 'Hata', 'Lütfen tüm alanları doldurun');
       return;
     }
-      appStore.login({
-        email,
-        password
-      }, router);
+    try {
+      await appStore.login({ email, password }, router);
+      await appStore.setSavedCredentials(email, password, rememberMe);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   };
 
   const handleRegisterPress = React.useCallback(() => {
@@ -66,21 +80,47 @@ const LoginScreen = observer(() => {
               }
             />
 
-            <TextField
-              text70
-              placeholder="Şifre"
-              floatingPlaceholder
-              containerStyle={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              enableErrors
-              validate={['required']}
-              validateOnStart
-              leadingAccessory={
-                <AntDesign name="lock" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
-              }
-            />
+            <View style={styles.passwordContainer}>
+              <View style={{ flex: 1 }}>
+                <TextField
+                  text70
+                  placeholder="Şifre"
+                  floatingPlaceholder
+                  containerStyle={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  enableErrors
+                  validate={['required']}
+                  validateOnStart
+                  leadingAccessory={
+                    <AntDesign name="lock" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
+                  }
+                />
+              </View>
+              <Button
+                link
+                style={styles.showPasswordButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={24}
+                  color={Colors.grey30}
+                />
+              </Button>
+            </View>
+
+            <View style={styles.rememberMeContainer}>
+              <Switch
+                value={rememberMe}
+                onValueChange={setRememberMe}
+                style={styles.switch}
+              />
+              <Text text80 color={Colors.grey30}>
+                Beni Hatırla
+              </Text>
+            </View>
 
             <Button
               label={appStore.loading ? "Giriş yapılıyor..." : "Giriş Yap"}
@@ -141,6 +181,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: Colors.grey50,
     paddingBottom: 8,
+    paddingRight: 40,
   },
   loginButton: {
     height: 50,
@@ -148,6 +189,26 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     marginTop: 20,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  showPasswordButton: {
+    padding: 10,
+    marginLeft: -40,
+    height: 44,
+    justifyContent: 'center',
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  switch: {
+    marginRight: 10,
   },
 });
 

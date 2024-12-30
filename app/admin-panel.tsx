@@ -113,7 +113,7 @@ const AdminPanel = () => {
                     <Button
                         link
                         iconSource={() => <AntDesign name="logout" size={24} color={Colors.primary} />}
-                        onPress={() => router.push('/')}
+                        onPress={() => appStore.logout(router)}
                     />
                 </View>
 
@@ -171,7 +171,7 @@ const AdminPanel = () => {
                         />
                         <Picker
                             value={selectedTest}
-                            onChange={(value: any) => value && setSelectedTest(value)}
+                            onChange={(value: any) => setSelectedTest(value)}
                             style={styles.testTypePicker}
                             placeholder="Test Seçin (Opsiyonel)"
                             showSearch
@@ -181,10 +181,18 @@ const AdminPanel = () => {
                             useDialog={false}
                             renderPicker={() => {
                                 const selected = tests.find(test => test._id === selectedTest);
+                                if (selectedTest === "") {
+                                    return (
+                                        <View style={styles.pickerContainer}>
+                                            <Text style={styles.pickerText}>Tüm Testler</Text>
+                                            <MaterialIcons name="arrow-drop-down" size={24} color={Colors.grey30} />
+                                        </View>
+                                    );
+                                }
                                 return (
                                     <View style={styles.pickerContainer}>
                                         <Text style={styles.pickerText}>
-                                            {selected ? selected.name : "Test Seçin"}
+                                            {selectedTest ? (selected ? selected.name : "Tüm Testler") : "Test Seçin"}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={Colors.grey30} />
                                     </View>

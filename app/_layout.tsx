@@ -7,8 +7,14 @@ import { appStore } from '../store/appStore';
 
 const RootLayout = observer(() => {
   const router = useRouter();
+  
   useEffect(() => {
-    appStore.checkToken(router);
+    const initializeApp = async () => {
+      await appStore.getTokenAndUserInfo();
+      appStore.checkToken(router);
+    };
+
+    initializeApp();
   }, []);
 
   return (

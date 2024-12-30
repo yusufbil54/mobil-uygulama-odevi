@@ -4,8 +4,8 @@ import { View, Text, Card, Colors, TextField } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
-import { API_URL } from '../store/appStore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL, appStore } from '../store/appStore';
+import { observer } from 'mobx-react';
 import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
@@ -28,7 +28,7 @@ interface TestResult {
     };
 }
 
-export default function AllResultsScreen() {
+const AllResultsScreen = observer(() => {
     const [searchQuery, setSearchQuery] = useState('');
     const [testResults, setTestResults] = useState<TestResult[]>([]);
     const [loading, setLoading] = useState(true);
@@ -39,17 +39,14 @@ export default function AllResultsScreen() {
 
     const fetchTestResults = async () => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            const userId = await AsyncStorage.getItem('userId');
-            
-            if (!token || !userId) {
+            if (!appStore.token || !appStore.user) {
                 router.push('/');
                 return;
             }
 
-            const response = await axios.get(`${API_URL}/api/tests/user-tests/${userId}`, {
+            const response = await axios.get(`${API_URL}/api/tests/user-tests/${appStore.user.id}`, {
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    Authorization: `Bearer ${appStore.token}`
                 }
             });
 
@@ -171,7 +168,9 @@ export default function AllResultsScreen() {
             </ScrollView>
         </View>
     );
-}
+});
+
+export default AllResultsScreen;
 
 const styles = StyleSheet.create({
   container: {

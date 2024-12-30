@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Dimensions, ImageBackground } from 'react-native';
 import { View, Text, TextField, Button, Colors, Card } from 'react-native-ui-lib';
 import { router } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { observer } from 'mobx-react';
 import { appStore } from '../store/appStore';
 
@@ -14,6 +14,7 @@ const RegisterScreen = observer(() => {
   const [tc, setTc] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = () => {
     appStore.register({
@@ -105,21 +106,36 @@ const RegisterScreen = observer(() => {
               }
             />
 
-            <TextField
-              text70
-              placeholder="Şifre (en az 6 karakter)"
-              floatingPlaceholder
-              containerStyle={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              enableErrors
-              validate={['required', (value) => value.length >= 6 || 'Şifre en az 6 karakter olmalıdır']}
-              validateOnStart
-              leadingAccessory={
-                <AntDesign name="lock" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
-              }
-            />
+            <View style={styles.passwordContainer}>
+              <View style={{ flex: 1 }}>
+                <TextField
+                  text70
+                  placeholder="Şifre (en az 6 karakter)"
+                  floatingPlaceholder
+                  containerStyle={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  enableErrors
+                  validate={['required', (value) => value.length >= 6 || 'Şifre en az 6 karakter olmalıdır']}
+                  validateOnStart
+                  leadingAccessory={
+                    <AntDesign name="lock" size={20} color={Colors.grey30} style={{ marginRight: 10 }} />
+                  }
+                />
+              </View>
+              <Button
+                link
+                style={styles.showPasswordButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={24}
+                  color={Colors.grey30}
+                />
+              </Button>
+            </View>
 
             <Button
               label={appStore.loading ? "Kayıt yapılıyor..." : "Kayıt Ol"}
@@ -180,6 +196,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: Colors.grey50,
     paddingBottom: 8,
+    paddingRight: 40,
   },
   registerButton: {
     height: 50,
@@ -187,6 +204,18 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: 20,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  showPasswordButton: {
+    padding: 10,
+    marginLeft: -40,
+    height: 44,
+    justifyContent: 'center',
   },
 });
 

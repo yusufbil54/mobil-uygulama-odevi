@@ -78,7 +78,7 @@ const getUserProfile = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         res.json({
-            _id: user._id,
+            id: user._id,
             name: user.name,
             surname: user.surname,
             tc: user.tc,
@@ -111,7 +111,7 @@ const updateProfile = async (req, res) => {
         res.status(200).json({
             success: true,
             data: {
-                _id: updatedUser._id,
+                id: updatedUser._id,
                 name: updatedUser.name,
                 surname: updatedUser.surname,
                 email: updatedUser.email,
@@ -127,9 +127,65 @@ const updateProfile = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+
+        // Şifre eşleşme kontrolü
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Yeni şifreler eşleşmiyor'
+            });
+        }
+
+        // Password alanı select: false olduğu için +password ile çekiyoruz
+        const user = await User.findById(req.user._id).select('+password');
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kullanıcı bulunamadı'
+            });
+        }
+
+        // Mevcut şifre kontrolü - matchPassword metodu User modelinde tanımlı
+        const isMatch = await user.matchPassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: 'Mevcut şifre yanlış'
+            });
+        }
+
+        // Yeni şifre minimum uzunluk kontrolü (User modelinde tanımlı)
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Yeni şifre en az 6 karakter olmalıdır'
+            });
+        }
+
+        // Yeni şifre atama - pre save middleware'i otomatik olarak hashleyecek
+        user.password = newPassword;
+        await user.save();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Şifre başarıyla güncellendi'
+        });
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Şifre değiştirme işlemi başarısız'
+        });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getUserProfile,
     updateProfile,
+    changePassword,
 };

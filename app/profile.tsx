@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { View, Text, Card, Colors, TextField, Button, Avatar } from 'react-native-ui-lib';
 import { router } from 'expo-router';
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { observer } from 'mobx-react';
 import { appStore } from '../store/appStore';
 
@@ -14,7 +14,6 @@ interface User {
     surname: string;
     email: string;
     birthDate: string;
-    password: string;
     role: string;
 }
 
@@ -23,7 +22,12 @@ interface ProfileData {
     surname: string;
     email: string;
     birthDate: string;
-    password: string;
+}
+
+interface PasswordData {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
 }
 
 const ProfileScreen = observer(() => {
@@ -35,8 +39,7 @@ const ProfileScreen = observer(() => {
     name: '',
     surname: '',
     email: '',
-    birthDate: '',
-    password: ''
+    birthDate: ''
   });
 
   useEffect(() => {
@@ -45,20 +48,46 @@ const ProfileScreen = observer(() => {
       name: user?.name || '',
       surname: user?.surname || '',
       email: user?.email || '',
-      birthDate: user?.birthDate || '',
-      password: user?.password || ''
+      birthDate: user?.birthDate || ''
     });
   }, [appStore.user]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [passwordData, setPasswordData] = useState<PasswordData>({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSave = async () => {
     try {
-      console.log(profileData);
       await appStore.updateProfile(profileData);
       setIsEditing(false);
     } catch (error) {
       console.error('Profile update error:', error);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    try {
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        appStore.showToast('error', 'Hata', 'Yeni şifreler eşleşmiyor');
+        return;
+      }
+
+      await appStore.changePassword(passwordData);
+      setIsChangingPassword(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      console.error('Password change error:', error);
     }
   };
 
@@ -169,24 +198,7 @@ const ProfileScreen = observer(() => {
                   />
                 </View>
               </View>
-              
-              <View style={styles.fieldContainer}>
-                <View style={styles.iconContainer}>
-                  <MaterialIcons name="person" size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.inputWrapper}>
-                  <TextField
-                    label="Şifre"
-                    value={profileData.password}
-                    onChangeText={(text) => setProfileData({ ...profileData, password: text })}
-                    editable={isEditing}
-                    style={styles.input}
-                    labelStyle={styles.labelText}
-                    color={Colors.grey10}
-                  />
-                </View>
-              </View>
-
+            
               
             </View>
 
@@ -208,6 +220,121 @@ const ProfileScreen = observer(() => {
                 />
               </View>
             )}
+          </Card>
+
+          <Card enableShadow style={[styles.infoCard, { marginTop: 20 }]}>
+            <View>
+              <Text text60 color={Colors.grey10} marginB-10>
+                Şifre Değiştir
+              </Text>
+
+              {!isChangingPassword ? (
+                <Button
+                  label="Şifre Değiştir"
+                  outline
+                  color={Colors.primary}
+                  onPress={() => setIsChangingPassword(true)}
+                />
+              ) : (
+                <>
+                  <View style={styles.passwordContainer}>
+                    <View style={{ flex: 1 }}>
+                      <TextField
+                        label="Mevcut Şifre"
+                        value={passwordData.currentPassword}
+                        onChangeText={(text) => setPasswordData(prev => ({ ...prev, currentPassword: text }))}
+                        secureTextEntry={!showCurrentPassword}
+                        style={styles.input}
+                        labelStyle={styles.labelText}
+                      />
+                    </View>
+                    <Button
+                      link
+                      style={styles.showPasswordButton}
+                      onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      <Ionicons
+                        name={showCurrentPassword ? 'eye-off' : 'eye'}
+                        size={24}
+                        color={Colors.grey30}
+                      />
+                    </Button>
+                  </View>
+
+                  <View style={styles.passwordContainer}>
+                    <View style={{ flex: 1 }}>
+                      <TextField
+                        label="Yeni Şifre"
+                        value={passwordData.newPassword}
+                        onChangeText={(text) => setPasswordData(prev => ({ ...prev, newPassword: text }))}
+                        secureTextEntry={!showNewPassword}
+                        style={styles.input}
+                        labelStyle={styles.labelText}
+                      />
+                    </View>
+                    <Button
+                      link
+                      style={styles.showPasswordButton}
+                      onPress={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      <Ionicons
+                        name={showNewPassword ? 'eye-off' : 'eye'}
+                        size={24}
+                        color={Colors.grey30}
+                      />
+                    </Button>
+                  </View>
+
+                  <View style={styles.passwordContainer}>
+                    <View style={{ flex: 1 }}>
+                      <TextField
+                        label="Yeni Şifre (Tekrar)"
+                        value={passwordData.confirmPassword}
+                        onChangeText={(text) => setPasswordData(prev => ({ ...prev, confirmPassword: text }))}
+                        secureTextEntry={!showConfirmPassword}
+                        style={styles.input}
+                        labelStyle={styles.labelText}
+                      />
+                    </View>
+                    <Button
+                      link
+                      style={styles.showPasswordButton}
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      <Ionicons
+                        name={showConfirmPassword ? 'eye-off' : 'eye'}
+                        size={24}
+                        color={Colors.grey30}
+                      />
+                    </Button>
+                  </View>
+
+                  <View row spread marginT-20>
+                    <Button
+                      outline
+                      label="İptal"
+                      color={Colors.grey20}
+                      onPress={() => {
+                        setIsChangingPassword(false);
+                        setPasswordData({
+                          currentPassword: '',
+                          newPassword: '',
+                          confirmPassword: ''
+                        });
+                      }}
+                      style={[styles.button, styles.cancelButton]}
+                      outlineColor={Colors.grey40}
+                    />
+                    <Button
+                      label="Şifreyi Güncelle"
+                      backgroundColor={Colors.primary}
+                      onPress={handlePasswordChange}
+                      style={[styles.button, styles.saveButton]}
+                    />
+                  </View>
+                </>
+              )}
+            </View>
           </Card>
         </View>
       </ScrollView>
@@ -305,5 +432,17 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     elevation: 2,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  showPasswordButton: {
+    padding: 10,
+    marginLeft: -40,
+    height: 44,
+    justifyContent: 'center',
   },
 });
