@@ -59,137 +59,142 @@ const HomeScreen = observer(() => {
     const router = useRouter();
 
     useEffect(() => {
-    if(appStore.user && appStore.token) {
-    fetchRecentTests();
-    }
-}, [appStore.user, appStore.token]);
+        const loadData = async () => {
+            try {
+                // Token ve user kontrolü
+                if (!appStore.token || !appStore.user?.id) {
+                    router.push('/');
+                    return;
+                }
 
-const fetchRecentTests = async () => {
-    try {
-
-        if (!appStore.token || !appStore?.user.id) {
-            console.log('Token or userId missing');
-            router.push('/');
-            return;
-        }
-
-        const response = await axios.get(`${API_URL}/api/tests/user-tests/${appStore?.user.id}`, {
-            headers: {
-                Authorization: `Bearer ${appStore.token}`
+                await fetchRecentTests();
+            } catch (error) {
+                console.error('Error loading data:', error);
             }
-        });
+        };
 
-        if (response.data.success) {
-            const sortedTests = response.data.data
-                .sort((a: TestResult, b: TestResult) =>
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                )
-                .slice(0, 5);
-            setRecentTests(sortedTests);
+        loadData();
+    }, [appStore.token, appStore.user]); // token ve user değiştiğinde tekrar çalışsın
+
+    const fetchRecentTests = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/tests/user-tests/${appStore.user.id}`, {
+                headers: {
+                    Authorization: `Bearer ${appStore.token}`
+                }
+            });
+
+            if (response.data.success) {
+                const sortedTests = response.data.data
+                    .sort((a: TestResult, b: TestResult) =>
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                    )
+                    .slice(0, 5);
+                setRecentTests(sortedTests);
+            }
+        } catch (error) {
+            console.error('Error fetching recent tests:', error);
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        console.error('Error fetching recent tests:', error);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
-const getStatusFromResults = (results: TestResult['results']) => {
-    const turkeyValue = results.turkey;
-    if (turkeyValue.includes('Yüksek')) return 'high';
-    if (turkeyValue.includes('Düşük')) return 'low';
-    return 'normal';
-};
+    const getStatusFromResults = (results: TestResult['results']) => {
+        const turkeyValue = results.turkey;
+        if (turkeyValue.includes('Yüksek')) return 'high';
+        if (turkeyValue.includes('Düşük')) return 'low';
+        return 'normal';
+    };
 
-return (
-    <View style={styles.container}>
-        <View style={styles.header}>
-            <View>
-                <Text text50 color={Colors.grey10}>
-                    Hoş Geldiniz
-                </Text>
-                <Text text65 color={Colors.grey30}>
-                    {(appStore.user as any)?.name} {(appStore.user as any)?.surname}
-                </Text>
-            </View>
-            <View row centerV>
-                <Button
-                    link
-                    iconSource={() => <AntDesign name="user" size={24} color={Colors.primary} />}
-                    onPress={() => router.push('/profile')}
-                    style={styles.iconButton}
-                />
-                <Button
-                    link
-                    iconSource={() => <AntDesign name="logout" size={24} color={Colors.primary} />}
-                    onPress={() => appStore.logout(router)}
-                />
-            </View>
-        </View>
-
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.content}>
-                <View style={styles.sectionHeader}>
-                    <Text text65 color={Colors.grey10}>
-                        Son Test Sonuçları
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <View>
+                    <Text text50 color={Colors.grey10}>
+                        Hoş Geldiniz
                     </Text>
+                    <Text text65 color={Colors.grey30}>
+                        {(appStore.user as any)?.name} {(appStore.user as any)?.surname}
+                    </Text>
+                </View>
+                <View row centerV>
                     <Button
                         link
-                        label="Tümünü Gör"
-                        color={Colors.primary}
-                        onPress={() => router.push('/allResults')}
+                        iconSource={() => <AntDesign name="user" size={24} color={Colors.primary} />}
+                        onPress={() => router.push('/profile')}
+                        style={styles.iconButton}
+                    />
+                    <Button
+                        link
+                        iconSource={() => <AntDesign name="logout" size={24} color={Colors.primary} />}
+                        onPress={() => appStore.logout(router)}
                     />
                 </View>
-
-                {loading ? (
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                ) : recentTests.length > 0 ? (
-                    recentTests.map((result) => (
-                        <Card key={result._id} style={styles.resultCard} enableShadow>
-                            <View style={styles.resultContainer}>
-                                <View style={styles.resultHeader}>
-                                    <Text style={styles.testName}>{result.testType.name}</Text>
-                                    <Text style={styles.dateText}>
-                                        {new Date(result.date).toLocaleDateString('tr-TR')}
-                                    </Text>
-                                </View>
-                                <View style={styles.resultValueSection}>
-                                    <View style={styles.valueContainer}>
-                                        <MaterialIcons
-                                            name={
-                                                getStatusFromResults(result.results) === 'high' ? 'arrow-upward' :
-                                                    getStatusFromResults(result.results) === 'low' ? 'arrow-downward' : 'remove'
-                                            }
-                                            size={24}
-                                            color={getStatusColor(getStatusFromResults(result.results))}
-                                            style={styles.valueIcon}
-                                        />
-                                        <Text style={styles.valueText}>
-                                            {result.value}
-                                        </Text>
-                                    </View>
-                                    <View style={[
-                                        styles.statusIndicator,
-                                        { backgroundColor: getStatusColor(getStatusFromResults(result.results)) + '20' }
-                                    ]}>
-                                        <Text style={[
-                                            styles.statusText,
-                                            { color: getStatusColor(getStatusFromResults(result.results)) }
-                                        ]}>
-                                            {result.results.turkey}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-                        </Card>
-                    ))
-                ) : (
-                    <Text style={styles.noDataText}>Henüz test sonucu bulunmamaktadır.</Text>
-                )}
             </View>
-        </ScrollView>
-    </View>
-);
+
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                    <View style={styles.sectionHeader}>
+                        <Text text65 color={Colors.grey10}>
+                            Son Test Sonuçları
+                        </Text>
+                        <Button
+                            link
+                            label="Tümünü Gör"
+                            color={Colors.primary}
+                            onPress={() => router.push('/allResults')}
+                        />
+                    </View>
+
+                    {loading ? (
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                    ) : recentTests.length > 0 ? (
+                        recentTests.map((result) => (
+                            <Card key={result._id} style={styles.resultCard} enableShadow>
+                                <View style={styles.resultContainer}>
+                                    <View style={styles.resultHeader}>
+                                        <Text style={styles.testName}>{result.testType.name}</Text>
+                                        <Text style={styles.dateText}>
+                                            {new Date(result.date).toLocaleDateString('tr-TR')}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.resultValueSection}>
+                                        <View style={styles.valueContainer}>
+                                            <MaterialIcons
+                                                name={
+                                                    getStatusFromResults(result.results) === 'high' ? 'arrow-upward' :
+                                                        getStatusFromResults(result.results) === 'low' ? 'arrow-downward' : 'remove'
+                                                }
+                                                size={24}
+                                                color={getStatusColor(getStatusFromResults(result.results))}
+                                                style={styles.valueIcon}
+                                            />
+                                            <Text style={styles.valueText}>
+                                                {result.value}
+                                            </Text>
+                                        </View>
+                                        <View style={[
+                                            styles.statusIndicator,
+                                            { backgroundColor: getStatusColor(getStatusFromResults(result.results)) + '20' }
+                                        ]}>
+                                            <Text style={[
+                                                styles.statusText,
+                                                { color: getStatusColor(getStatusFromResults(result.results)) }
+                                            ]}>
+                                                {result.results.turkey}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </Card>
+                        ))
+                    ) : (
+                        <Text style={styles.noDataText}>Henüz test sonucu bulunmamaktadır.</Text>
+                    )}
+                </View>
+            </ScrollView>
+        </View>
+    );
 });
 
 const styles = StyleSheet.create({

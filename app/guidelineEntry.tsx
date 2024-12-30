@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import { View, Text, Button, Colors, TextField, Card, Picker } from 'react-native-ui-lib';
 import { router } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import { API_URL, appStore } from '../store/appStore';
@@ -53,11 +53,7 @@ const GuidelineEntry = () => {
                     headers: { Authorization: `Bearer ${appStore.token}` }
                 });
                 if (response.data) {
-                    const types = response.data.data.map((type: string) => ({
-                        label: type,
-                        value: type
-                    }));
-                    console.log(types)
+                    const types = response.data.data
                     setTestTypes(types);
                 }
             } catch (error) {
@@ -143,6 +139,7 @@ const GuidelineEntry = () => {
         }
     };
 
+    console.log(form.currentAgeRange.testType);
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -172,8 +169,6 @@ const GuidelineEntry = () => {
                     />
 
                     <Picker
-                        placeholder="Test Tipi Seçin"
-                        placeholderTextColor={Colors.grey40}
                         value={form.currentAgeRange.testType}
                         onChange={(value: any) => setForm(prev => ({
                             ...prev,
@@ -181,11 +176,30 @@ const GuidelineEntry = () => {
                         }))}
                         style={styles.input}
                         marginB-20
+                        placeholder="Test Tipi Seçin"
+                        showSearch
+                        searchPlaceholder="Test Ara..."
+                        searchStyle={styles.pickerSearch}
+                        enableModalBlur={false}
+                        useDialog={false}
+                        containerStyle={styles.pickerDropdown}
+                        renderPicker={() => {
+                            const selectedTest = testTypes.find(test => test._id === form.currentAgeRange.testType);
+                            return (
+                                <View style={styles.pickerContainer}>
+                                    <Text style={styles.pickerText}>
+                                        {selectedTest ? selectedTest.name : "Test Tipi Seçin"}
+                                    </Text>
+                                    <MaterialIcons name="arrow-drop-down" size={24} color={Colors.grey30} />
+                                </View>
+                            );
+                        }}
                     >
-                        {testTypes.map((type) => (
-                            <Picker.Item key={type.value} value={type.value} label={type.label} />
+                        {testTypes.map((type: any) => (
+                            <Picker.Item key={type._id} value={type._id} label={type.name} />
                         ))}
                     </Picker>
+                    
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>1. Yaş Aralığı</Text>
@@ -445,7 +459,37 @@ const styles = StyleSheet.create({
     rangeValues: {
         fontSize: 12,
         color: Colors.grey20,
-    }
+    },
+    pickerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        height: 50,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        backgroundColor: Colors.white,
+    },
+    pickerText: {
+        fontSize: 16,
+        color: Colors.grey10,
+    },
+    pickerSearch: {
+        color: Colors.grey10,
+        paddingHorizontal: 12,
+        height: 40,
+        backgroundColor: Colors.grey70,
+        borderRadius: 8,
+    },
+    pickerDropdown: {
+        maxHeight: 200,
+        backgroundColor: Colors.white,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        marginTop: 4,
+    },
 });
 
 export default GuidelineEntry; 

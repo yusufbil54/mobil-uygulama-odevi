@@ -3,8 +3,7 @@ const Guideline = require('../models/Guideline');
 // Yeni klavuz ekle
 const addGuideline = async (req, res) => {
     try {
-        console.log('Gelen veri:', req.body);
-        
+        console.log('Gelen veri:', req.body)        
         const { name, ageRanges } = req.body;
 
         if (!name || !ageRanges || ageRanges.length === 0) {

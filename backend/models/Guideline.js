@@ -37,9 +37,9 @@ const ageRangeSchema = new mongoose.Schema({
 
 const testTypeSchema = new mongoose.Schema({
     type: {
-        type: String,
-        required: true,
-        enum: ['IgA', 'IgM', 'IgG', 'IgG1', 'IgG2', 'IgG3', 'IgG4']
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test',
+        required: true
     },
     ageRanges: [ageRangeSchema]
 });

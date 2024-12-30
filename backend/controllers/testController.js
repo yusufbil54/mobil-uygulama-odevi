@@ -19,7 +19,6 @@ const addTestResult = async (req, res) => {
 
         // TC'ye ait kayıtlı kullanıcı var mı kontrol et
         const user = await User.findOne({ tc: patientTc });
-        console.log('Bulunan kullanıcı:', user);
 
         const testResult = await TestResult.create({
             patientTc,
@@ -29,7 +28,6 @@ const addTestResult = async (req, res) => {
             results
         });
 
-        console.log('Oluşturulan test:', testResult);
 
         res.status(201).json({
             success: true,
@@ -48,20 +46,17 @@ const addTestResult = async (req, res) => {
 // Kullanıcının kendi test sonuçlarını getir
 const getUserTests = async (req, res) => {
     try {
-        console.log('Requested userId:', req.params.id); // Debug için
-
         if (!req.params.id) {
             return res.status(400).json({
                 success: false,
                 message: 'User ID is required'
             });
         }
-
+        
         const tests = await TestResult.find({ userId: req.params.id })
             .populate('testType', 'name')
             .sort({ date: -1 });
 
-        console.log('Found tests:', tests); // Debug için
 
         res.json({
             success: true,
