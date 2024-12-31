@@ -8,21 +8,39 @@ import Toast from 'react-native-toast-message';
 import { API_URL, appStore } from '../store/appStore';
 
 interface AgeRange {
-    testType: string;
-    ageGroupStart: string;
-    ageGroupEnd: string;
-    geometricMean: string;
-    standardDeviation: string;
-    minValue: string;
-    maxValue: string;
-    confidenceMin: string;
-    confidenceMax: string;
+    startValue: number;
+    startUnit: 'day' | 'month' | 'year';
+    endValue: number;
+    endUnit: 'day' | 'month' | 'year';
+    isEndInclusive: boolean;
+    geometricMean: number;
+    standardDeviation: number;
+    minValue: number;
+    maxValue: number;
+    confidenceMin: number;
+    confidenceMax: number;
 }
 
 interface GuidelineForm {
     name: string;
-    currentAgeRange: AgeRange;
-    ageRanges: AgeRange[];
+    currentAgeRange: {
+        testType: string;
+        startValue: string;
+        startUnit: 'day' | 'month' | 'year';
+        endValue: string;
+        endUnit: 'day' | 'month' | 'year';
+        isEndInclusive: boolean;
+        geometricMean: string;
+        standardDeviation: string;
+        minValue: string;
+        maxValue: string;
+        confidenceMin: string;
+        confidenceMax: string;
+    };
+    testTypes: Array<{
+        type: string;
+        ageRanges: AgeRange[];
+    }>;
 }
 
 
@@ -31,8 +49,11 @@ const GuidelineEntry = () => {
         name: '',
         currentAgeRange: {
             testType: '',
-            ageGroupStart: '',
-            ageGroupEnd: '',
+            startValue: '',
+            startUnit: 'month',
+            endValue: '',
+            endUnit: 'month',
+            isEndInclusive: false,
             geometricMean: '',
             standardDeviation: '',
             minValue: '',
@@ -40,7 +61,7 @@ const GuidelineEntry = () => {
             confidenceMin: '',
             confidenceMax: ''
         },
-        ageRanges: []
+        testTypes: []
     });
 
     const [testTypes, setTestTypes] = useState<Array<{label: string, value: string}>>([]);
@@ -65,7 +86,7 @@ const GuidelineEntry = () => {
     }, []);
 
     const handleAddAgeRange = () => {
-        if (!form.currentAgeRange.testType || !form.currentAgeRange.ageGroupStart || !form.currentAgeRange.ageGroupEnd) {
+        if (!form.currentAgeRange.testType || !form.currentAgeRange.startValue || !form.currentAgeRange.endValue) {
             Toast.show({
                 type: 'error',
                 text1: 'Hata',
@@ -74,13 +95,50 @@ const GuidelineEntry = () => {
             return;
         }
 
+        const newAgeRange: AgeRange = {
+            startValue: Number(form.currentAgeRange.startValue),
+            startUnit: form.currentAgeRange.startUnit,
+            endValue: Number(form.currentAgeRange.endValue),
+            endUnit: form.currentAgeRange.endUnit,
+            isEndInclusive: form.currentAgeRange.isEndInclusive,
+            geometricMean: Number(form.currentAgeRange.geometricMean),
+            standardDeviation: Number(form.currentAgeRange.standardDeviation),
+            minValue: Number(form.currentAgeRange.minValue),
+            maxValue: Number(form.currentAgeRange.maxValue),
+            confidenceMin: Number(form.currentAgeRange.confidenceMin),
+            confidenceMax: Number(form.currentAgeRange.confidenceMax)
+        };
+
+        setForm(prev => {
+            const testTypeIndex = prev.testTypes.findIndex(t => t.type === prev.currentAgeRange.testType);
+            
+            if (testTypeIndex === -1) {
+                // Yeni test tipi ekle
+                return {
+                    ...prev,
+                    testTypes: [...prev.testTypes, {
+                        type: prev.currentAgeRange.testType,
+                        ageRanges: [newAgeRange]
+                    }]
+                };
+            } else {
+                // Mevcut test tipine yaş aralığı ekle
+                const updatedTestTypes = [...prev.testTypes];
+                updatedTestTypes[testTypeIndex].ageRanges.push(newAgeRange);
+                return {
+                    ...prev,
+                    testTypes: updatedTestTypes
+                };
+            }
+        });
+
+        // Form alanlarını temizle
         setForm(prev => ({
             ...prev,
-            ageRanges: [...prev.ageRanges, prev.currentAgeRange],
             currentAgeRange: {
-                testType: '',
-                ageGroupStart: '',
-                ageGroupEnd: '',
+                ...prev.currentAgeRange,
+                startValue: '',
+                endValue: '',
                 geometricMean: '',
                 standardDeviation: '',
                 minValue: '',
@@ -207,10 +265,10 @@ const GuidelineEntry = () => {
                             <TextField
                                 placeholder="Başlangıç (ay)"
                                 placeholderTextColor={Colors.grey40}
-                                value={form.currentAgeRange.ageGroupStart}
+                                value={form.currentAgeRange.startValue}
                                 onChangeText={(text) => setForm(prev => ({
                                     ...prev,
-                                    currentAgeRange: { ...prev.currentAgeRange, ageGroupStart: text }
+                                    currentAgeRange: { ...prev.currentAgeRange, startValue: text }
                                 }))}
                                 keyboardType="numeric"
                                 style={[styles.input, styles.halfInput]}
@@ -218,10 +276,10 @@ const GuidelineEntry = () => {
                             <TextField
                                 placeholder="Bitiş (ay)"
                                 placeholderTextColor={Colors.grey40}
-                                value={form.currentAgeRange.ageGroupEnd}
+                                value={form.currentAgeRange.endValue}
                                 onChangeText={(text) => setForm(prev => ({
                                     ...prev,
-                                    currentAgeRange: { ...prev.currentAgeRange, ageGroupEnd: text }
+                                    currentAgeRange: { ...prev.currentAgeRange, endValue: text }
                                 }))}
                                 keyboardType="numeric"
                                 style={[styles.input, styles.halfInput]}
@@ -325,22 +383,22 @@ const GuidelineEntry = () => {
                         marginT-20
                     />
 
-                    {form.ageRanges.length > 0 && (
+                    {form.testTypes.length > 0 && (
                         <>
                             <Text style={styles.sectionTitle}>Eklenen Yaş Aralıkları</Text>
-                            {form.ageRanges.map((range, index) => (
-                                <View key={index} style={styles.addedRange}>
+                            {form.testTypes.map((test, testIndex) => (
+                                <View key={testIndex} style={styles.addedRange}>
                                     <Text style={styles.rangeText}>
-                                        {`${range.ageGroupStart}-${range.ageGroupEnd}`}
+                                        {`${test.ageRanges[0].startValue}-${test.ageRanges[0].endValue}`}
                                     </Text>
                                     <Text style={styles.rangeValues}>
-                                        {`Ortalama: ${range.geometricMean} ± ${range.standardDeviation}`}
+                                        {`Ortalama: ${test.ageRanges[0].geometricMean} ± ${test.ageRanges[0].standardDeviation}`}
                                     </Text>
                                     <Text style={styles.rangeValues}>
-                                        {`Min-Max: ${range.minValue}-${range.maxValue}`}
+                                        {`Min-Max: ${test.ageRanges[0].minValue}-${test.ageRanges[0].maxValue}`}
                                     </Text>
                                     <Text style={styles.rangeValues}>
-                                        {`Güven Aralığı: [${range.confidenceMin}, ${range.confidenceMax}]`}
+                                        {`Güven Aralığı: [${test.ageRanges[0].confidenceMin}, ${test.ageRanges[0].confidenceMax}]`}
                                     </Text>
                                 </View>
                             ))}

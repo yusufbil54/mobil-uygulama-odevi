@@ -6,13 +6,89 @@ import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import { API_URL, appStore } from '../store/appStore';
+import { observer } from 'mobx-react';
 
 interface Test {
     _id: string;
     name: string;
+    type: string;
 }
 
 const { width } = Dimensions.get('window');
+
+const TestResultDisplay = ({ results, testTypes }: { results: any, testTypes: Test[] }) => {
+    if (!results?.data) return null;
+
+    const { data: testResult } = results;
+    const testType = testTypes.find(test => test._id === testResult.testType);
+
+    return (
+        <Card style={styles.resultCard}>
+            <Text style={styles.resultTitle}>Test Sonuçları</Text>
+            
+            <View style={styles.resultRow}>
+                <Text style={styles.labelText}>Test Tipi:</Text>
+                <Text style={styles.valueText}>
+                    {testType ? `${testType.name} (${testType.type})` : 'Bilinmiyor'}
+                </Text>
+            </View>
+
+            <View style={styles.resultRow}>
+                <Text style={styles.labelText}>Test Değeri:</Text>
+                <Text style={styles.valueText}>{testResult.value} g/L</Text>
+            </View>
+
+            {testResult.guidelineResults?.map((result: any, index: number) => (
+                <View key={index} style={styles.guidelineSection}>
+                    <Text style={styles.sectionTitle}>{result.guidelineSource} Kılavuzu</Text>
+                    
+                    <View style={styles.resultRow}>
+                        <Text style={styles.labelText}>Sonuç:</Text>
+                        <Text style={[
+                            styles.valueText,
+                            result.resultStatus === 'Normal' ? styles.normalStatus :
+                            result.resultStatus === 'Düşük' ? styles.lowStatus : 
+                            styles.highStatus
+                        ]}>
+                            {result.resultStatus}
+                        </Text>
+                    </View>
+
+                    {result.referenceRange && (
+                        <View style={styles.resultRow}>
+                            <Text style={styles.labelText}>Referans Aralığı:</Text>
+                            <Text style={styles.valueText}>
+                                {result.referenceRange.min} - {result.referenceRange.max} g/L
+                            </Text>
+                        </View>
+                    )}
+
+                    {result.referenceRange?.ageRange && (
+                        <View style={styles.resultRow}>
+                            <Text style={styles.labelText}>Yaş Aralığı:</Text>
+                            <Text style={styles.valueText}>
+                                {result.referenceRange.ageRange.startValue} {result.referenceRange.ageRange.startUnit} - {' '}
+                                {result.referenceRange.ageRange.endValue} {result.referenceRange.ageRange.endUnit}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+            ))}
+
+            {testResult.patientAge && (
+                <View style={styles.patientSection}>
+                    <Text style={styles.sectionTitle}>Hasta Bilgileri</Text>
+                    <View style={styles.resultRow}>
+                        <Text style={styles.labelText}>Yaş:</Text>
+                        <Text style={styles.valueText}>
+                            {testResult.patientAge.years} yıl {testResult.patientAge.months} ay {testResult.patientAge.days} gün
+                        </Text>
+                    </View>
+                </View>
+            )}
+        </Card>
+    );
+};
 
 const TestEntry = () => {
     const router = useRouter();
@@ -25,21 +101,26 @@ const TestEntry = () => {
         value: '',
     });
     const [calculatedResults, setCalculatedResults] = useState<any>(null);
+    const [guidelines, setGuidelines] = useState<any[]>([]);
+    const [testTypes, setTestTypes] = useState<Test[]>([]);
 
-    useEffect(() => {
-        fetchTests();
-    }, []);
+    const fetchGuidelines = async () => {
+        const response = await axios.get(`${API_URL}/api/guidelines/all`, {
+            headers: { Authorization: `Bearer ${appStore.token}` }
+        });
+        setGuidelines(response.data.data);
+    };
 
-    const fetchTests = async () => {
+    const fetchTestTypes = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/tests/all-tests`, {
-                headers: {
-                    Authorization: `Bearer ${appStore.token}`
-                }
+            const response = await axios.get(`${API_URL}/api/tests/types`, {
+                headers: { Authorization: `Bearer ${appStore.token}` }
             });
-            setTests(response.data.data);
+            if (response.data.success) {
+                setTestTypes(response.data.data);
+            }
         } catch (error) {
-            console.error('Error fetching tests:', error);
+            console.error('Test tipleri getirme hatası:', error);
             Toast.show({
                 type: 'error',
                 text1: 'Hata',
@@ -48,19 +129,40 @@ const TestEntry = () => {
         }
     };
 
-    const handleCalculate = () => {
-        const value = parseFloat(newTest.value);
+    useEffect(() => {
+        fetchTestTypes();
+        fetchGuidelines();
+    }, []);
 
-        // 5 farklı kılavuza göre değerlendirme
-        const results = {
-            who: value < 50 ? 'Düşük' : value <= 100 ? 'Normal' : 'Yüksek',
-            europe: value < 45 ? 'Düşük' : value <= 95 ? 'Normal' : 'Yüksek',
-            america: value < 55 ? 'Düşük' : value <= 105 ? 'Normal' : 'Yüksek',
-            asia: value < 40 ? 'Düşük' : value <= 90 ? 'Normal' : 'Yüksek',
-            turkey: value < 52 ? 'Düşük' : value <= 98 ? 'Normal' : 'Yüksek',
-        };
+    const handleCalculate = async () => {
+        try {
+            const testData = {
+                patientName: newTest.patientName,
+                patientTc: newTest.patientTc,
+                birthDate: newTest.birthDate,
+                testType: newTest.testType,
+                value: parseFloat(newTest.value)
+            };
+            const response = await axios.post(`${API_URL}/api/tests/calculate`, testData, {
+                headers: { Authorization: `Bearer ${appStore.token}` }
+            });
 
-        setCalculatedResults(results);
+            if (response.data.success) {
+                setCalculatedResults(response.data);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Hesaplama Başarılı',
+                    text2: 'Test sonuçları hesaplandı'
+                });
+            }
+        } catch (error: any) {
+            console.error('Hesaplama hatası:', error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: error.response?.data?.message || 'Hesaplama sırasında bir hata oluştu'
+            });
+        }
     };
 
     const handleSave = async () => {
@@ -155,10 +257,13 @@ const TestEntry = () => {
                     />
                     <Picker
                         value={newTest.testType}
-                        onChange={(value: any) => value && setNewTest({ ...newTest, testType: value })}
-                        style={styles.inputField}
-                        marginB-12
-                        placeholder="Tetkik Seçiniz"
+                        onChange={(value: any) => setNewTest(prev => ({
+                            ...prev,
+                            testType: String(value)
+                        }))}
+                        style={styles.input}
+                        marginB-20
+                        placeholder="Test Tipi Seçin"
                         showSearch
                         searchPlaceholder="Test Ara..."
                         searchStyle={styles.pickerSearch}
@@ -166,22 +271,22 @@ const TestEntry = () => {
                         useDialog={false}
                         containerStyle={styles.pickerDropdown}
                         renderPicker={() => {
-                            const selectedTest = tests.find(test => test._id === newTest.testType);
+                            const selectedTest = testTypes.find(test => test._id === newTest.testType);
                             return (
                                 <View style={styles.pickerContainer}>
                                     <Text style={styles.pickerText}>
-                                        {selectedTest ? selectedTest.name : "Tetkik Seçiniz"}
+                                        {selectedTest ? `${selectedTest.name} (${selectedTest.type})` : "Test Tipi Seçin"}
                                     </Text>
                                     <MaterialIcons name="arrow-drop-down" size={24} color={Colors.grey30} />
                                 </View>
                             );
                         }}
                     >
-                        {tests.map((test) => (
+                        {testTypes.map((test) => (
                             <Picker.Item 
                                 key={test._id} 
                                 value={test._id} 
-                                label={test.name}
+                                label={`${test.name} (${test.type})`}
                             />
                         ))}
                     </Picker>
@@ -203,47 +308,28 @@ const TestEntry = () => {
                             marginT-12
                         />
                     ) : (
-                        <>
-                            <View style={styles.resultCard}>
-                                <Text style={styles.resultTitle}>Kılavuzlara Göre Sonuçlar:</Text>
-                                <View style={styles.resultRow}>
-                                    <Text style={styles.guidelineText}>WHO Kılavuzu:</Text>
-                                    <Text style={[styles.resultValue, { marginLeft: 10 }]}>{calculatedResults.who}</Text>
-                                </View>
-                                <View style={styles.resultRow}>
-                                    <Text style={styles.guidelineText}>Avrupa Kılavuzu:</Text>
-                                    <Text style={[styles.resultValue, { marginLeft: 10 }]}>{calculatedResults.europe}</Text>
-                                </View>
-                                <View style={styles.resultRow}>
-                                    <Text style={styles.guidelineText}>Amerika Kılavuzu:</Text>
-                                    <Text style={[styles.resultValue, { marginLeft: 10 }]}>{calculatedResults.america}</Text>
-                                </View>
-                                <View style={styles.resultRow}>
-                                    <Text style={styles.guidelineText}>Asya Kılavuzu:</Text>
-                                    <Text style={[styles.resultValue, { marginLeft: 10 }]}>{calculatedResults.asia}</Text>
-                                </View>
-                                <View style={styles.resultRow}>
-                                    <Text style={styles.guidelineText}>Türkiye Kılavuzu:</Text>
-                                    <Text style={[styles.resultValue, { marginLeft: 10 }]}>{calculatedResults.turkey}</Text>
-                                </View>
-                            </View>
-                            <Button
-                                label="Kaydet"
-                                onPress={handleSave}
-                                backgroundColor={Colors.green30}
-                                borderRadius={8}
-                                marginT-12
-                            />
-                            <Button
-                                label="Vazgeç"
-                                onPress={() => router.push('/admin-panel')}
-                                link
-                                labelStyle={{ color: Colors.red30 }}
-                                marginT-12
-                            />
-                        </>
+                        <Button
+                            label="Yeni Hesaplama"
+                            onPress={() => {
+                                setCalculatedResults(null);
+                                setNewTest({
+                                    patientName: '',
+                                    patientTc: '',
+                                    birthDate: '',
+                                    testType: '',
+                                    value: '',
+                                });
+                            }}
+                            backgroundColor={Colors.blue30}
+                        />
                     )}
                 </Card>
+
+                {/* Sonuçları göster */}
+                <TestResultDisplay 
+                    results={calculatedResults} 
+                    testTypes={testTypes}
+                />
             </ScrollView>
         </View>
     );
@@ -279,32 +365,58 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
     },
     resultCard: {
-        padding: 16,
-        backgroundColor: Colors.grey80,
-        borderRadius: 8,
-        marginTop: 20,
-        alignItems: 'center',
+        padding: 20,
+        backgroundColor: Colors.white,
+        borderRadius: 12,
+        marginBottom: 20,
     },
-    resultText: { fontSize: 18, fontWeight: 'bold' },
-    resultValue: { color: Colors.blue30, fontSize: 18, fontWeight: 'bold' },
     resultTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 15,
         color: Colors.grey10,
+        marginBottom: 20,
+        textAlign: 'center',
     },
     resultRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: Colors.grey60,
-        width: '100%',
     },
-    guidelineText: {
+    labelText: {
         fontSize: 16,
         color: Colors.grey20,
+    },
+    valueText: {
+        fontSize: 16,
+        color: Colors.grey10,
+        fontWeight: '500',
+    },
+    normalStatus: {
+        color: Colors.green30,
+        fontWeight: 'bold',
+    },
+    lowStatus: {
+        color: Colors.red30,
+        fontWeight: 'bold',
+    },
+    highStatus: {
+        color: Colors.orange30,
+        fontWeight: 'bold',
+    },
+    referenceSection: {
+        marginTop: 20,
+    },
+    patientSection: {
+        marginTop: 20,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: Colors.grey10,
+        marginBottom: 10,
     },
     pickerField: {
         paddingVertical: 8,
@@ -339,6 +451,19 @@ const styles = StyleSheet.create({
         borderColor: Colors.grey50,
         marginTop: 4,
     },
+    input: {
+        width: '100%',
+        minWidth: 100,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        padding: 15,
+        height: 55,
+        backgroundColor: Colors.white,
+        fontSize: 16,
+        color: Colors.black,
+        marginBottom: 15,
+    },
 });
 
-export default TestEntry;
+export default observer(TestEntry);

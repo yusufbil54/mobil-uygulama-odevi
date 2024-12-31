@@ -3,7 +3,7 @@ const Guideline = require('../models/Guideline');
 // Yeni klavuz ekle
 const addGuideline = async (req, res) => {
     try {
-        console.log('Gelen veri:', req.body)        
+    
         const { name, ageRanges } = req.body;
 
         if (!name || !ageRanges || ageRanges.length === 0) {
@@ -13,41 +13,93 @@ const addGuideline = async (req, res) => {
             });
         }
 
-        // Yaş aralıklarını test tiplerine göre grupla
-        const groupedByTestType = ageRanges.reduce((acc, range) => {
+        // Boş değerleri filtrele
+        const validAgeRanges = ageRanges.filter(range => 
+            range.geometricMean && 
+            range.standardDeviation && 
+            range.minValue && 
+            range.maxValue && 
+            range.confidenceMin && 
+            range.confidenceMax
+        );
+
+        if (validAgeRanges.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'En az bir geçerli yaş aralığı gereklidir'
+            });
+        }
+
+        // Yaş aralıklarını test tiplerine göre grupla ve formatı dönüştür
+        const groupedByTestType = validAgeRanges.reduce((acc, range) => {
             if (!acc[range.testType]) {
                 acc[range.testType] = [];
             }
-            // testType'ı hariç tut ve diğer alanları ekle
-            const { testType, ...rangeData } = range;
-            acc[range.testType].push({
-                ...rangeData,
-                geometricMean: Number(rangeData.geometricMean),
-                standardDeviation: Number(rangeData.standardDeviation),
-                minValue: Number(rangeData.minValue),
-                maxValue: Number(rangeData.maxValue),
-                confidenceMin: Number(rangeData.confidenceMin),
-                confidenceMax: Number(rangeData.confidenceMax)
-            });
+
+            // Yaş aralığını yeni formata dönüştür
+            const formattedRange = {
+                startValue: Number(range.ageGroupStart),
+                startUnit: 'month',
+                endValue: Number(range.ageGroupEnd),
+                endUnit: 'month',
+                isEndInclusive: false,
+                geometricMean: Number(range.geometricMean),
+                standardDeviation: Number(range.standardDeviation),
+                minValue: Number(range.minValue),
+                maxValue: Number(range.maxValue),
+                confidenceMin: Number(range.confidenceMin),
+                confidenceMax: Number(range.confidenceMax)
+            };
+
+            acc[range.testType].push(formattedRange);
             return acc;
         }, {});
 
-        // testTypes array'ini oluştur
-        const testTypes = Object.entries(groupedByTestType).map(([type, ranges]) => ({
-            type,
-            ageRanges: ranges
-        }));
+        // Mevcut kılavuzu kontrol et
+        let guideline = await Guideline.findOne({ name });
+        
+        if (guideline) {
+            // Kılavuz varsa, her test tipi için yaş aralıklarını güncelle
+            const updatedTestTypes = Object.entries(groupedByTestType).map(([type, ranges]) => {
+                const existingTestTypeIndex = guideline.testTypes.findIndex(t => t.type === type);
+                
+                if (existingTestTypeIndex !== -1) {
+                    // Test tipi varsa, yeni yaş aralıklarını ekle
+                    guideline.testTypes[existingTestTypeIndex].ageRanges.push(...ranges);
+                } else {
+                    // Test tipi yoksa, yeni test tipi olarak ekle
+                    guideline.testTypes.push({
+                        type,
+                        ageRanges: ranges
+                    });
+                }
+            });
 
-        const guideline = await Guideline.create({
-            name,
-            testTypes
-        });
+            // Kılavuzu güncelle
+            guideline = await Guideline.findOneAndUpdate(
+                { name },
+                { testTypes: guideline.testTypes },
+                { new: true }
+            );
+        } else {
+            // Yeni kılavuz oluştur
+            const testTypes = Object.entries(groupedByTestType).map(([type, ranges]) => ({
+                type,
+                ageRanges: ranges
+            }));
 
-        console.log('Oluşturulan klavuz:', guideline);
+            guideline = await Guideline.create({
+                name,
+                testTypes
+            });
+
+            console.log('Yeni kılavuz oluşturuldu:', guideline);
+        }
 
         res.status(201).json({
             success: true,
-            data: guideline
+            data: guideline,
+            message: guideline ? 'Kılavuz güncellendi' : 'Yeni kılavuz oluşturuldu'
         });
 
     } catch (error) {

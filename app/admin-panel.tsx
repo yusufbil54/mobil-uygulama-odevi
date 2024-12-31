@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { View, Text, Card, Button, Colors, TextField, Picker } from 'react-native-ui-lib';
+import { View, Text, Card, Button, Colors, TextField, Picker, Dialog } from 'react-native-ui-lib';
 import { Stack, router } from 'expo-router';
 import { AntDesign, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import axios from 'axios';
@@ -13,12 +13,148 @@ interface Test {
     name: string;
     type: string;
 }
+const TestDetailModal = ({ isVisible, test, onClose }: { isVisible: boolean; test: any; onClose: () => void }) => {
+    if (!test) return null;
+
+    return (
+        <Dialog
+            visible={isVisible}
+            onDismiss={onClose}
+            width="95%"
+            height="90%"
+            containerStyle={styles.modalContainer}
+        >
+            <View style={styles.modalHeader}>
+                <Text text50 color={Colors.grey10}>Test Detayları</Text>
+                <AntDesign
+                    name="close"
+                    size={24}
+                    color={Colors.grey30}
+                    onPress={onClose}
+                />
+            </View>
+
+            <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
+                <View style={styles.modalSection}>
+                    <Text style={styles.sectionTitle}>Test Bilgileri</Text>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Test Tipi:</Text>
+                        <Text style={styles.detailValue}>{test.testType?.name}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Test Kodu:</Text>
+                        <Text style={styles.detailValue}>{test.testType?.type}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Değer:</Text>
+                        <Text style={[styles.detailValue, styles.highlightedValue]}>
+                            {test.value} g/L
+                        </Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Genel Durum:</Text>
+                        <Text style={[
+                            styles.detailValue,
+                            test.resultStatus === 'Normal' ? styles.normalText :
+                                test.resultStatus === 'Düşük' ? styles.lowText :
+                                    styles.highText
+                        ]}>
+                            {test.resultStatus}
+                        </Text>
+                    </View>
+
+
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Test Tarihi:</Text>
+                        <Text style={styles.detailValue}>
+                            {new Date(test.date).toLocaleString('tr-TR')}
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={styles.modalSection}>
+                    <Text style={styles.sectionTitle}>Hasta Bilgileri</Text>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>TC Kimlik No:</Text>
+                        <Text style={styles.detailValue}>{test.patientTc}</Text>
+                    </View>
+                    {test.patientAge && (
+                        <>
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Yaş:</Text>
+                                <Text style={styles.detailValue}>
+                                    {test.patientAge.years} yıl {test.patientAge.months} ay {test.patientAge.days} gün
+                                </Text>
+                            </View>
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Toplam Gün:</Text>
+                                <Text style={styles.detailValue}>{test.patientAge.totalDays} gün</Text>
+                            </View>
+                        </>
+                    )}
+                </View>
+
+                {test.guidelineResults?.map((result: any, index: number) => (
+                    <View key={index} style={styles.modalSection}>
+                        <Text style={styles.sectionTitle}>
+                            {result.guidelineSource} Kılavuzu Sonuçları
+                        </Text>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Sonuç:</Text>
+                            <Text style={[
+                                styles.detailValue,
+                                result.resultStatus === 'Normal' ? styles.normalText :
+                                    result.resultStatus === 'Düşük' ? styles.lowText :
+                                        styles.highText
+                            ]}>
+                                {result.resultStatus}
+                            </Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Referans Aralığı:</Text>
+                            <Text style={styles.detailValue}>
+                                {result.referenceRange.min} - {result.referenceRange.max} g/L
+                            </Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Ortalama Değer:</Text>
+                            <Text style={styles.detailValue}>
+                                {result.referenceRange.mean} g/L
+                            </Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Standart Sapma:</Text>
+                            <Text style={styles.detailValue}>
+                                {result.referenceRange.sd}
+                            </Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Güven Aralığı:</Text>
+                            <Text style={styles.detailValue}>
+                                {result.referenceRange.confidenceMin} - {result.referenceRange.confidenceMax} g/L
+                            </Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Yaş Aralığı:</Text>
+                            <Text style={styles.detailValue}>
+                                {result.referenceRange.ageRange.startValue} {result.referenceRange.ageRange.startUnit} - {' '}
+                                {result.referenceRange.ageRange.endValue} {result.referenceRange.ageRange.endUnit}
+                            </Text>
+                        </View>
+                    </View>
+                ))}
+            </ScrollView>
+        </Dialog>
+    );
+};
+
 const AdminPanel = () => {
     const [tc, setTc] = useState('');
     const [tests, setTests] = useState<Test[]>([]);
-    const [selectedTest, setSelectedTest] = useState('');
+    const [selectedTest, setSelectedTest] = useState(null);
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     // Test tiplerini yükle
     useEffect(() => {
@@ -61,20 +197,20 @@ const AdminPanel = () => {
 
             if (response.data.success) {
                 let results = response.data.data;
-                
+
                 // Seçili test tipine göre filtrele
                 if (selectedTest) {
                     results = results.filter((test: any) => test.testType?._id === selectedTest);
                 }
 
                 setSearchResults(results);
-                
+
                 if (results.length === 0) {
                     const selectedTestName = tests.find(t => t._id === selectedTest)?.name;
                     Toast.show({
                         type: 'info',
                         text1: 'Bilgi',
-                        text2: selectedTest 
+                        text2: selectedTest
                             ? `Bu TC numarasına ait ${selectedTestName} sonucu bulunamadı`
                             : 'Bu TC numarasına ait test sonucu bulunamadı'
                     });
@@ -123,8 +259,8 @@ const AdminPanel = () => {
             <ScrollView style={styles.scrollView}>
                 {/* Ana İşlemler */}
                 <View style={styles.mainActions}>
-                    <Card 
-                        style={styles.mainActionCard} 
+                    <Card
+                        style={styles.mainActionCard}
                         onPress={() => router.push('/testEntry')}
                     >
                         <View style={styles.actionIconContainer}>
@@ -137,7 +273,7 @@ const AdminPanel = () => {
                         <AntDesign name="right" size={20} color={Colors.grey40} />
                     </Card>
 
-                    <Card 
+                    <Card
                         style={styles.mainActionCard}
                         onPress={() => router.push('/guidelineEntry')}
                     >
@@ -201,9 +337,9 @@ const AdminPanel = () => {
                         >
                             <Picker.Item key="all" value="" label="Tüm Testler" />
                             {tests.map((test) => (
-                                <Picker.Item 
-                                    key={test._id} 
-                                    value={test._id} 
+                                <Picker.Item
+                                    key={test._id}
+                                    value={test._id}
                                     label={test.name}
                                 />
                             ))}
@@ -224,7 +360,14 @@ const AdminPanel = () => {
                                 Test Sonuçları ({searchResults.length})
                             </Text>
                             {searchResults.map((test, index) => (
-                                <Card key={index} style={styles.resultCard}>
+                                <Card
+                                    key={index}
+                                    style={styles.resultCard}
+                                    onPress={() => {
+                                        setSelectedTest(test);
+                                        setShowModal(true);
+                                    }}
+                                >
                                     <View row spread centerV>
                                         <View>
                                             <Text text70 color={Colors.grey20} marginB-5>
@@ -234,9 +377,24 @@ const AdminPanel = () => {
                                                 {new Date(test.date).toLocaleDateString('tr-TR')}
                                             </Text>
                                         </View>
-                                        <Text text60 color={Colors.primary}>
-                                            {test.value}
-                                        </Text>
+                                        <View right>
+                                            <Text text60 color={Colors.primary}>
+                                                {test.value} g/L
+                                            </Text>
+                                            {test.resultStatus && (
+                                                <Text
+                                                    text80
+                                                    style={[
+                                                        styles.statusText,
+                                                        test.resultStatus === 'Normal' ? styles.normalText :
+                                                            test.resultStatus === 'Düşük' ? styles.lowText :
+                                                                styles.highText
+                                                    ]}
+                                                >
+                                                    {test.resultStatus}
+                                                </Text>
+                                            )}
+                                        </View>
                                     </View>
                                 </Card>
                             ))}
@@ -244,6 +402,15 @@ const AdminPanel = () => {
                     )}
                 </Card>
             </ScrollView>
+
+            <TestDetailModal
+                isVisible={showModal}
+                test={selectedTest}
+                onClose={() => {
+                    setShowModal(false);
+                    setSelectedTest(null);
+                }}
+            />
         </View>
     );
 };
@@ -296,35 +463,35 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     searchContainer: {
-    flexDirection: 'column', // Yatay hizalamayı dikeye çevir
-    alignItems: 'stretch', // Elemanların genişliklerini hizalamak için
-    marginBottom: 10, // Alt boşluk ekle
+        flexDirection: 'column', // Yatay hizalamayı dikeye çevir
+        alignItems: 'stretch', // Elemanların genişliklerini hizalamak için
+        marginBottom: 10, // Alt boşluk ekle
     },
     searchInput: {
-    flex: 1, // Esnek genişlik kullan
-    height: 45,
-    borderWidth: 1,
-    borderColor: Colors.grey50,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    backgroundColor: Colors.white,
-    marginBottom: 10,
-    fontSize: 16,
-    color: Colors.grey40,
+        flex: 1, // Esnek genişlik kullan
+        height: 45,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        backgroundColor: Colors.white,
+        marginBottom: 10,
+        fontSize: 16,
+        color: Colors.grey40,
     },
     testTypePicker: {
-    flex: 1, // Esnek genişlik kullan
-    height: 45,
-    borderWidth: 1,
-    borderColor: Colors.grey50,
-    borderRadius: 8,
-    backgroundColor: Colors.grey40,
-    marginBottom: 10,
+        flex: 1, // Esnek genişlik kullan
+        height: 45,
+        borderWidth: 1,
+        borderColor: Colors.grey50,
+        borderRadius: 8,
+        backgroundColor: Colors.grey40,
+        marginBottom: 10,
     },
     searchButton: {
-    height: 45,
-    minWidth: '100%', // Butonu tam genişlik yap
-    marginTop: 10, // Buton ile üstündeki alan arasında boşluk ekle
+        height: 45,
+        minWidth: '100%', // Butonu tam genişlik yap
+        marginTop: 10, // Buton ile üstündeki alan arasında boşluk ekle
     },
     resultCard: {
         padding: 15,
@@ -374,6 +541,87 @@ const styles = StyleSheet.create({
         borderColor: Colors.grey50,
         marginTop: 4,
     },
+    modalContainer: {
+        backgroundColor: Colors.white,
+        borderRadius: 12,
+        padding: 20,
+        height: '90%'
+    },
+    modalScrollView: {
+        flex: 1,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingBottom: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60
+    },
+    modalSection: {
+        marginBottom: 25,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: Colors.grey10,
+        marginBottom: 15
+    },
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+        paddingHorizontal: 5
+    },
+    detailLabel: {
+        fontSize: 16,
+        color: Colors.grey30,
+        flex: 1
+    },
+    detailValue: {
+        fontSize: 16,
+        color: Colors.grey10,
+        fontWeight: '500',
+        flex: 1,
+        textAlign: 'right'
+    },
+    highlightedValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: Colors.primary
+    },
+    statusText: {
+        marginTop: 4,
+        textAlign: 'right',
+        fontWeight: 'bold'
+    },
+    normalText: {
+        color: Colors.green30
+    },
+    lowText: {
+        color: Colors.red30
+    },
+    highText: {
+        color: Colors.orange30
+    },
+    rangeSection: {
+        marginTop: 15,
+        marginBottom: 15,
+        backgroundColor: Colors.grey70,
+        padding: 15,
+        borderRadius: 8,
+    },
+    rangeSectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: Colors.grey10,
+        marginBottom: 10,
+    }
 });
 
 export default AdminPanel;
