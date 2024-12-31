@@ -15,25 +15,30 @@ interface TestResult {
     testType: {
         _id: string;
         name: string;
+        type: string;
     };
     value: number;
     date: string;
-    results: {
-        who: string;
-        europe: string;
-        america: string;
-        asia: string;
-        turkey: string;
-    };
+    resultStatus: string;
+    guidelineResults: Array<{
+        guidelineSource: string;
+        resultStatus: string;
+        referenceRange: {
+            min: number;
+            max: number;
+            mean: number;
+            sd: number;
+        }
+    }>;
 }
 
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'normal':
+        case 'Normal':
             return Colors.green30;
-        case 'high':
+        case 'Yüksek':
             return Colors.red30;
-        case 'low':
+        case 'Düşük':
             return Colors.blue30;
         default:
             return Colors.grey30;
@@ -162,29 +167,40 @@ const HomeScreen = observer(() => {
                                         <View style={styles.valueContainer}>
                                             <MaterialIcons
                                                 name={
-                                                    getStatusFromResults(result.results) === 'high' ? 'arrow-upward' :
-                                                        getStatusFromResults(result.results) === 'low' ? 'arrow-downward' : 'remove'
+                                                    result.resultStatus === 'Yüksek' ? 'arrow-upward' :
+                                                    result.resultStatus === 'Düşük' ? 'arrow-downward' : 'remove'
                                                 }
                                                 size={24}
-                                                color={getStatusColor(getStatusFromResults(result.results))}
+                                                color={getStatusColor(result.resultStatus)}
                                                 style={styles.valueIcon}
                                             />
                                             <Text style={styles.valueText}>
-                                                {result.value}
+                                                {result.value} g/L
                                             </Text>
                                         </View>
                                         <View style={[
                                             styles.statusIndicator,
-                                            { backgroundColor: getStatusColor(getStatusFromResults(result.results)) + '20' }
+                                            { backgroundColor: getStatusColor(result.resultStatus) + '20' }
                                         ]}>
                                             <Text style={[
                                                 styles.statusText,
-                                                { color: getStatusColor(getStatusFromResults(result.results)) }
+                                                { color: getStatusColor(result.resultStatus) }
                                             ]}>
-                                                {result.results.turkey}
+                                                {result.resultStatus}
                                             </Text>
                                         </View>
                                     </View>
+                                    {result.guidelineResults?.[0] && (
+                                        <View style={styles.referenceContainer}>
+                                            <Text style={styles.referenceText}>
+                                                Referans: {result.guidelineResults[0].referenceRange.min} - {' '}
+                                                {result.guidelineResults[0].referenceRange.max} g/L
+                                            </Text>
+                                            <Text style={styles.sourceText}>
+                                                {result.guidelineResults[0].guidelineSource}
+                                            </Text>
+                                        </View>
+                                    )}
                                 </View>
                             </Card>
                         ))
@@ -324,6 +340,21 @@ const styles = StyleSheet.create({
         marginTop: 20,
         fontSize: 16,
     },
+    referenceContainer: {
+        marginTop: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: Colors.grey60,
+    },
+    referenceText: {
+        fontSize: 12,
+        color: Colors.grey30,
+    },
+    sourceText: {
+        fontSize: 12,
+        color: Colors.grey40,
+        marginTop: 2,
+    }
 });
 
 export default HomeScreen;

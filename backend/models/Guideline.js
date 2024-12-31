@@ -1,13 +1,27 @@
 const mongoose = require('mongoose');
 
 const ageRangeSchema = new mongoose.Schema({
-    ageGroupStart: {
-        type: String,
+    startValue: {
+        type: Number,
         required: true
     },
-    ageGroupEnd: {
+    startUnit: {
         type: String,
+        enum: ['day', 'month', 'year'],
         required: true
+    },
+    endValue: {
+        type: Number,
+        required: true
+    },
+    endUnit: {
+        type: String,
+        enum: ['day', 'month', 'year'],
+        required: true
+    },
+    isEndInclusive: {
+        type: Boolean,
+        default: false
     },
     geometricMean: {
         type: Number,

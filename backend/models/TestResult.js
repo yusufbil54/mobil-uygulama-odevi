@@ -9,7 +9,7 @@ const testResultSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: false // Kayıtlı olmayan hastalar için opsiyonel
+        required: false
     },
     testType: {
         type: mongoose.Schema.Types.ObjectId,
@@ -20,12 +20,37 @@ const testResultSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    results: {
-        who: String,
-        europe: String,
-        america: String,
-        asia: String,
-        turkey: String
+    patientAge: {
+        years: Number,
+        months: Number,
+        days: Number,
+        totalDays: Number
+    },
+    guidelineResults: [{
+        guidelineSource: String,
+        resultStatus: {
+            type: String,
+            enum: ['Düşük', 'Normal', 'Yüksek']
+        },
+        referenceRange: {
+            min: Number,
+            max: Number,
+            mean: Number,
+            sd: Number,
+            confidenceMin: Number,
+            confidenceMax: Number,
+            ageRange: {
+                startValue: Number,
+                startUnit: String,
+                endValue: Number,
+                endUnit: String
+            }
+        }
+    }],
+    resultStatus: {
+        type: String,
+        enum: ['Düşük', 'Normal', 'Yüksek'],
+        required: true
     },
     date: {
         type: Date,

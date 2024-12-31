@@ -1,108 +1,88 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Dimensions, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
-import { View, Text, Card, Colors, TextField } from 'react-native-ui-lib';
-import { router } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Card, Button, Colors } from 'react-native-ui-lib';
+import { Stack, useRouter } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { API_URL, appStore } from '../store/appStore';
 import { observer } from 'mobx-react';
-import Toast from 'react-native-toast-message';
 
-const { width } = Dimensions.get('window');
-
-// Test sonucu için interface
 interface TestResult {
     _id: string;
     testType: {
         _id: string;
         name: string;
+        type: string;
     };
     value: number;
     date: string;
-    results: {
-        who: string;
-        europe: string;
-        america: string;
-        asia: string;
-        turkey: string;
-    };
+    resultStatus: string;
+    guidelineResults: Array<{
+        guidelineSource: string;
+        resultStatus: string;
+        referenceRange: {
+            min: number;
+            max: number;
+            mean: number;
+            sd: number;
+        }
+    }>;
 }
 
-const AllResultsScreen = observer(() => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [testResults, setTestResults] = useState<TestResult[]>([]);
+const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'Normal':
+            return Colors.green30;
+        case 'Yüksek':
+            return Colors.red30;
+        case 'Düşük':
+            return Colors.blue30;
+        default:
+            return Colors.grey30;
+    }
+};
+
+const AllResults = observer(() => {
+    const router = useRouter();
+    const [tests, setTests] = useState<TestResult[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchTestResults();
+        fetchTests();
     }, []);
 
-    const fetchTestResults = async () => {
+    const fetchTests = async () => {
         try {
-            if (!appStore.token || !appStore.user) {
-                router.push('/');
-                return;
-            }
-
-            const response = await axios.get(`${API_URL}/api/tests/user-tests/${appStore.user.id}`, {
-                headers: {
-                    Authorization: `Bearer ${appStore.token}`
+            const response = await axios.get(
+                `${API_URL}/api/tests/user-tests/${appStore.user?.id}`,
+                {
+                    headers: { Authorization: `Bearer ${appStore.token}` }
                 }
-            });
+            );
 
             if (response.data.success) {
-                setTestResults(response.data.data);
+                setTests(response.data.data.sort((a: TestResult, b: TestResult) => 
+                    new Date(b.date).getTime() - new Date(a.date).getTime()
+                ));
             }
         } catch (error) {
-            console.error('Error fetching test results:', error);
-            Toast.show({
-                type: 'error',
-                text1: 'Hata',
-                text2: 'Test sonuçları alınırken bir hata oluştu'
-            });
+            console.error('Error fetching tests:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const getStatusFromResults = (results: TestResult['results']) => {
-        const turkeyValue = results.turkey;
-        if (turkeyValue.includes('Yüksek')) return 'high';
-        if (turkeyValue.includes('Düşük')) return 'low';
-        return 'normal';
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'high': return Colors.red30;
-            case 'low': return Colors.blue30;
-            default: return Colors.green30;
-        }
-    };
-
-    const filteredResults = useMemo(() => {
-        return testResults.filter(result =>
-            result.testType.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [searchQuery, testResults]);
-
-    if (loading) {
-        return (
-            <View style={[styles.container, styles.centerContent]}>
-                <ActivityIndicator size="large" color={Colors.primary} />
-            </View>
-        );
-    }
-
     return (
         <View style={styles.container}>
+            <Stack.Screen options={{ headerShown: false }} />
+            
             <View style={styles.header}>
                 <View row centerV>
                     <AntDesign 
                         name="arrowleft" 
                         size={24} 
                         color={Colors.primary} 
-                        onPress={() => router.push('/home')}
+                        onPress={() => router.back()}
                         style={styles.backButton}
                     />
                     <Text text50 color={Colors.grey10}>
@@ -111,188 +91,158 @@ const AllResultsScreen = observer(() => {
                 </View>
             </View>
 
-            <View style={styles.searchContainer}>
-                <TextField
-                    placeholder="Test türü ara..."
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    leadingAccessory={
-                        <AntDesign name="search1" size={20} color={Colors.grey30} style={styles.searchIcon} />
-                    }
-                    style={styles.searchInput}
-                />
-            </View>
-
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                <View style={styles.content}>
-                    {filteredResults.map((result) => (
+            <ScrollView style={styles.scrollView}>
+                {loading ? (
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                ) : tests.length > 0 ? (
+                    tests.map((result) => (
                         <Card key={result._id} style={styles.resultCard} enableShadow>
                             <View style={styles.resultContainer}>
                                 <View style={styles.resultHeader}>
-                                    <Text style={styles.testName}>{result.testType.name}</Text>
+                                    <Text style={styles.testName}>
+                                        {result.testType?.name || 'Bilinmeyen Test'} 
+                                        {result.testType?.type ? ` (${result.testType.type})` : ''}
+                                    </Text>
                                     <Text style={styles.dateText}>
                                         {new Date(result.date).toLocaleDateString('tr-TR')}
                                     </Text>
                                 </View>
                                 <View style={styles.resultValueSection}>
                                     <View style={styles.valueContainer}>
-                                        <MaterialIcons 
+                                        <MaterialIcons
                                             name={
-                                                getStatusFromResults(result.results) === 'high' ? 'arrow-upward' :
-                                                getStatusFromResults(result.results) === 'low' ? 'arrow-downward' : 'remove'
-                                            } 
-                                            size={24} 
-                                            color={getStatusColor(getStatusFromResults(result.results))}
+                                                result.resultStatus === 'Yüksek' ? 'arrow-upward' :
+                                                result.resultStatus === 'Düşük' ? 'arrow-downward' : 'remove'
+                                            }
+                                            size={24}
+                                            color={getStatusColor(result.resultStatus || 'Normal')}
                                             style={styles.valueIcon}
                                         />
                                         <Text style={styles.valueText}>
-                                            {result.value}
+                                            {result.value} g/L
                                         </Text>
                                     </View>
                                     <View style={[
                                         styles.statusIndicator,
-                                        { backgroundColor: getStatusColor(getStatusFromResults(result.results)) + '20' }
+                                        { backgroundColor: getStatusColor(result.resultStatus || 'Normal') + '20' }
                                     ]}>
                                         <Text style={[
                                             styles.statusText,
-                                            { color: getStatusColor(getStatusFromResults(result.results)) }
+                                            { color: getStatusColor(result.resultStatus || 'Normal') }
                                         ]}>
-                                            {result.results.turkey}
+                                            {result.resultStatus || 'Normal'}
                                         </Text>
                                     </View>
                                 </View>
+                                {result.guidelineResults?.[0] && (
+                                    <View style={styles.referenceContainer}>
+                                        <Text style={styles.referenceText}>
+                                            Referans: {result.guidelineResults[0].referenceRange?.min || '?'} - {' '}
+                                            {result.guidelineResults[0].referenceRange?.max || '?'} g/L
+                                        </Text>
+                                        <Text style={styles.sourceText}>
+                                            {result.guidelineResults[0].guidelineSource || 'Standart Kılavuz'}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                         </Card>
-                    ))}
-                </View>
+                    ))
+                ) : (
+                    <Text style={styles.noDataText}>Henüz test sonucu bulunmamaktadır.</Text>
+                )}
             </ScrollView>
         </View>
     );
 });
 
-export default AllResultsScreen;
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.grey70,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: Colors.white,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  searchContainer: {
-    backgroundColor: Colors.white,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.grey60,
-  },
-  searchInput: {
-    backgroundColor: Colors.grey70,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    height: 45,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  resultCard: {
-    marginBottom: 8,
-    backgroundColor: Colors.white,
-    borderRadius: 8,
-    padding: 0,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  resultContainer: {
-    padding: 12,
-  },
-  resultHeader: {
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    paddingBottom: 6,
-  },
-  testName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.grey10,
-    marginBottom: 2,
-  },
-  dateText: {
-    fontSize: 12,
-    color: Colors.grey30,
-  },
-  resultValueSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  valueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  valueIcon: {
-    marginRight: 6,
-  },
-  valueText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  highValue: {
-    color: '#FF4444',
-  },
-  normalValue: {
-    color: '#2196F3',
-  },
-  lowValue: {
-    color: '#4CAF50',
-  },
-  statusIndicator: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  highStatus: {
-    backgroundColor: '#FFE5E5',
-  },
-  normalStatus: {
-    backgroundColor: '#E3F2FD',
-  },
-  lowStatus: {
-    backgroundColor: '#E8F5E9',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  highStatusText: {
-    color: '#FF4444',
-  },
-  normalStatusText: {
-    color: '#2196F3',
-  },
-  lowStatusText: {
-    color: '#4CAF50',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: Colors.grey70,
+    },
+    header: {
+        padding: 20,
+        paddingTop: 60,
+        backgroundColor: Colors.white,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.grey60,
+    },
+    backButton: {
+        marginRight: 10,
+    },
+    scrollView: {
+        flex: 1,
+        padding: 15,
+    },
+    resultCard: {
+        marginBottom: 10,
+        backgroundColor: Colors.white,
+        borderRadius: 8,
+    },
+    resultContainer: {
+        padding: 15,
+    },
+    resultHeader: {
+        marginBottom: 10,
+    },
+    testName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: Colors.grey10,
+        marginBottom: 4,
+    },
+    dateText: {
+        fontSize: 12,
+        color: Colors.grey30,
+    },
+    resultValueSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    valueContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    valueIcon: {
+        marginRight: 8,
+    },
+    valueText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: Colors.grey10,
+    },
+    statusIndicator: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    statusText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    noDataText: {
+        textAlign: 'center',
+        color: Colors.grey30,
+        marginTop: 20,
+        fontSize: 16,
+    },
+    referenceContainer: {
+        marginTop: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: Colors.grey60,
+    },
+    referenceText: {
+        fontSize: 12,
+        color: Colors.grey30,
+    },
+    sourceText: {
+        fontSize: 12,
+        color: Colors.grey40,
+        marginTop: 2,
+    }
 });
+
+export default AllResults;
